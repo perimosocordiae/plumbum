@@ -22,6 +22,16 @@ class Repl(cmd.Cmd):
 			self.print_exc()
 		else:
 			print('Success: stdlib reloaded')
+	
+	def do_show(self,line):
+		'Show the current definition of a var'
+		var = line.strip()
+		if var in stdlib.stdlib:
+			print('%s: stdlib function'%var)
+		elif self.cjsh.symtab:
+			print('%s: defined in symtab: %s'%(var,self.cjsh.symtab[var]))
+		else:
+			print('%s not found in stdlib or symtab')
 
 	def do_run(self,line):
 		'Run a CJSH source file'
@@ -57,7 +67,7 @@ class Repl(cmd.Cmd):
 		if lch >= 0 and rch < lch:
 			d = len(line[lch+1:]) - len(text) # super hax
 			return [f[d:] for f in glob('%s*'%line[lch+1:])]
-		comps = chain(stdlib.stdlib.keys(),self.cjsh.symtab.key())
+		comps = chain(stdlib.stdlib.keys(),self.cjsh.symtab.keys())
 		return sorted(k for k in comps if k.startswith(text))
 
 	def emptyline(self): pass
