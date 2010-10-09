@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 VERSION = '0.3'
-DEBUG = False
+DEBUG = True
 
 from sys import argv,exit,exc_info
 from itertools import chain

@@ -50,6 +50,20 @@ def sub(seq,*args):
 	regex = re.compile(args[0])
 	return (regex.sub(args[1],x) for x in seq)
 
+def seq_select(seq,*args):
+	inds = list(map(int,args))
+	if len(inds) > 1:
+		grab = lambda row: [row[i] for i in inds]
+		return map(grab,seq)
+	return (row[inds[0]] for row in seq)
+
+def lazy_uniq(seq):
+	last = None
+	for x in seq:
+		if x != last:
+			yield x
+			last = x
+
 stdlib = {
 	#lazy
 	'_slurp_': slurp,
@@ -62,6 +76,8 @@ stdlib = {
 	'flatten': flatten,
 	'zip': zip,
 	'range': lambda _,*args: range(*map(int,args)),
+	'select': seq_select,
+	'luniq': lazy_uniq,
 	#non-lazy
 	'sort': sorted,
 	'uniq': set,
