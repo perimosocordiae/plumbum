@@ -34,7 +34,7 @@ def cjsh_println(seq,*args):
 
 def flatten(seq,*args):
 	for x in seq:
-		if hasattr(x,'__iter__'):
+		if hasattr(x,'__iter__') and not str(x) == x:
 			for y in flatten(x,*args): # holy recursive generators, batman!
 				yield y
 		else:
@@ -60,6 +60,8 @@ stdlib = {
 	'compact': lambda seq: (x for x in seq if x not in ['',None]),
 	'strip': lambda seq: (x.strip() for x in seq),
 	'flatten': flatten,
+	'zip': zip,
+	'range': lambda _,*args: range(*map(int,args)),
 	#non-lazy
 	'sort': sorted,
 	'uniq': set,

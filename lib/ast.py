@@ -57,14 +57,15 @@ class Atom(object):
 	def __init__(self,atom):
 		self.atom = atom.strip()
 		lex = shlex(atom,posix=True)
-		lex.wordchars += '?!@$' # the more the merrier
+		lex.wordchars += '?!@$-' # the more the merrier
 		lex.quotes += '/' # for regexen
 		self.cmd,*self.args = list(lex)
 	def run(self,inputs,symtab):
 		if self.cmd in symtab:
 			return symtab[self.cmd].run(inputs,symtab)
 		if self.cmd in stdlib:
-			return stdlib[self.cmd](inputs,*self.args)
+			args = [(Atom(a[1:]).run([],symtab) if a.startswith('$') else a) for a in self.args]
+			return stdlib[self.cmd](inputs,*args)
 		return eval(self.atom)
 	def __str__(self):
 		return self.atom
