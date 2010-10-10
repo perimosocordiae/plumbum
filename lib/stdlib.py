@@ -5,85 +5,85 @@ from subprocess import Popen,PIPE
 from select import select
 
 def slurp(fname=''):
-	if len(fname) > 0:
-		return open(fname).readlines()
-	return sys.stdin.readlines()
+    if len(fname) > 0:
+        return open(fname).readlines()
+    return sys.stdin.readlines()
 
 # suppress 'broken pipe' error messages
 signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 def shellexec(cmd):
-	proc = Popen(cmd,shell=True,stdout=PIPE)
-	#return proc.stdout.readlines() <-- unfortunately, this doesn't work
-	line = ''
-	while True:
-		data = select([proc.stdout],[],[])[0][0]
-		c = data.read(1).decode('utf-8')
-		if len(c) == 0: return
-		elif c == "\n":
-			yield line+c
-			line = ''
-		else: line += c
+    proc = Popen(cmd,shell=True,stdout=PIPE)
+    #return proc.stdout.readlines() <-- unfortunately, this doesn't work
+    line = ''
+    while True:
+        data = select([proc.stdout],[],[])[0][0]
+        c = data.read(1).decode('utf-8')
+        if len(c) == 0: return
+        elif c == "\n":
+            yield line+c
+            line = ''
+        else: line += c
 
 def cjsh_print(seq,*args):
-	sep = re.sub(r'\\n',"\n",args[0]) if len(args) > 0 else ''
-	for x in seq:
-		print(x,sep='',end=sep)
+    sep = re.sub(r'\\n',"\n",args[0]) if len(args) > 0 else ''
+    for x in seq:
+        print(x,sep='',end=sep)
 def cjsh_println(seq,*args):
-	cjsh_print(seq,*args)
-	print()
+    cjsh_print(seq,*args)
+    print()
 
 def flatten(seq,*args):
-	for x in seq:
-		if hasattr(x,'__iter__') and not str(x) == x:
-			for y in flatten(x,*args): # holy recursive generators, batman!
-				yield y
-		else:
-			yield x
+    for x in seq:
+        if hasattr(x,'__iter__') and not str(x) == x:
+            for y in flatten(x,*args): # holy recursive generators, batman!
+                yield y
+        else:
+            yield x
 
 def grep(seq,*args):
-	assert len(args) == 1
-	regex = re.compile(args[0])
-	return (x for x in seq if regex.search(x))
+    assert len(args) == 1
+    regex = re.compile(args[0])
+    return (x for x in seq if regex.search(x))
 
 def sub(seq,*args):
-	assert len(args) > 1
-	regex = re.compile(args[0])
-	return (regex.sub(args[1],x) for x in seq)
+    assert len(args) > 1
+    regex = re.compile(args[0])
+    return (regex.sub(args[1],x) for x in seq)
 
 def seq_select(seq,*args):
-	inds = list(map(int,args))
-	if len(inds) > 1:
-		grab = lambda row: [row[i] for i in inds]
-		return map(grab,seq)
-	return (row[inds[0]] for row in seq)
+    inds = list(map(int,args))
+    if len(inds) > 1:
+        grab = lambda row: [row[i] for i in inds]
+        return map(grab,seq)
+    return (row[inds[0]] for row in seq)
 
 def lazy_uniq(seq):
-	last = None
-	for x in seq:
-		if x != last:
-			yield x
-			last = x
+    last = None
+    for x in seq:
+        if x != last:
+            yield x
+            last = x
 
 stdlib = {
-	#lazy
-	'_slurp_': slurp,
-	'_shell_': shellexec,
-	'grep': grep,'sub': sub,
-	'head': lambda seq,*args: islice(seq,*map(int,args)),
-	'inc': lambda seq: (x+1 for x in seq),
-	'compact': lambda seq: (x for x in seq if x not in ['',None]),
-	'strip': lambda seq: (x.strip() for x in seq),
-	'flatten': flatten,
-	'zip': zip,
-	'range': lambda _,*args: range(*map(int,args)),
-	'select': seq_select,
-	'luniq': lazy_uniq,
-	#non-lazy
-	'sort': sorted,
-	'uniq': set,
-	'sum': sum,
-	'count': lambda seq: sum(1 for _ in seq),
-	'print': cjsh_print,
-	'println': cjsh_println
-	}
+    #lazy
+    '_slurp_': slurp,
+    '_shell_': shellexec,
+    'grep': grep,'sub': sub,
+    'head': lambda seq,*args: islice(seq,*map(int,args)),
+    'inc': lambda seq: (x+1 for x in seq),
+    'compact': lambda seq: (x for x in seq if x not in ['',None]),
+    'strip': lambda seq: (x.strip() for x in seq),
+    'flatten': flatten,
+    'zip': zip,
+    'range': lambda _,*args: range(*map(int,args)),
+    'select': seq_select,
+    'luniq': lazy_uniq,
+    #non-lazy
+    'sort': sorted,
+    'uniq': set,
+    'sum': sum,
+    'count': lambda seq: sum(1 for _ in seq),
+    'print': cjsh_print,
+    'println': cjsh_println
+    }
 
