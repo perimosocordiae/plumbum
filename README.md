@@ -16,9 +16,9 @@ Watch this space for pertinent info.
  * Run a compiled program: `./cjsh foo.cjc`
 
 ## Code Examples ##
-`"hello, world!" | println`
-`[2,4,1,4,2] | uniq | println`
-`<foo.txt> | grep /bar/ | print`
-``yes` | strip | head 10 | println ","`
-`foo = uniq | sort
- <> | foo | print`
+ * `"hello, world!" | println`
+ * `[2,4,1,4,2] | uniq | println`
+ * `<foo.txt> | grep /bar/ | print`
+ * `\`yes\` | strip | head 10 | println ","`
+ * `foo = uniq | sort
+    <> | foo | print`
