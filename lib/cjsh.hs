@@ -5,6 +5,7 @@
 
 import Text.ParserCombinators.Parsec
 import Data.String.Utils
+import Data.List
 
 data Program = Program {stmts :: [Expression], 
                         symtab :: [(String,Expression)]}
@@ -35,7 +36,9 @@ evaluate = foldl eval []
 
 eval :: [String] -> Atom -> [String] --TODO (get other types, too)
 eval [] (LiteralAtom l) = l
-eval lst (Identifier i) = lst++[i] --TODO (need state monad for Program)
+eval lst (Identifier i) = case lookup i stdlib of
+	Just fn -> fn lst
+	Nothing -> error $ "Invalid identifier: "++i
 eval [] (SlurpAtom s) = [s] --TODO (going to be messy, using IO)
 eval [] (ShellAtom s) = [s] --TODO (here too)
 eval _ _ = error "Invalid pipe"
@@ -67,3 +70,13 @@ shellLiteral = do
 identifier = do
     s <- many1 letter
     return $ Identifier s
+
+-- STD LIBRARY
+stdlib :: [(String, [String] -> [String])]
+stdlib = [
+	("inc", map (show.(+1).(read::String->Int))),
+	("sort", sort),
+	("head", take 10),
+	("strip", map strip),
+	("count", (\lst -> [show(length lst)]))
+	]
