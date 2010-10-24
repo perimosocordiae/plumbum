@@ -79,8 +79,8 @@ class Slurp(Atom):
 class Shell(Atom):
     def __init__(self,cmd):
         self.cmd = cmd
-    def run(self,*_):
-        return stdlib['_shell_'](self.cmd)
+    def run(self,inputs,_):
+        return stdlib['_shell_'](self.cmd,inputs)
     def __str__(self):
         return '`%s`'%self.cmd
 

@@ -25,7 +25,7 @@ def shellexec(cmd):
         else: line += c
 
 def cjsh_print(seq,*args):
-    sep = re.sub(r'\\n',"\n",args[0]) if len(args) > 0 else ''
+    sep = re.sub(r'\\n',"\n",args[0]) if len(args) > 0 else '' #hax
     for x in seq:
         print(x,sep='',end=sep)
 def cjsh_println(seq,*args):
@@ -41,14 +41,18 @@ def flatten(seq,*args):
             yield x
 
 def grep(seq,*args):
-    assert len(args) == 1
+    assert len(args) == 1 
     regex = re.compile(args[0])
     return (x for x in seq if regex.search(x))
 
 def sub(seq,*args):
-    assert len(args) > 1
+    assert len(args) > 1 
     regex = re.compile(args[0])
     return (regex.sub(args[1],x) for x in seq)
+
+def split(seq,*args):
+    regex = re.compile("\s") if len(args)==0 else re.compile(args[0])
+    return (regex.split(x) for x in seq)
 
 def seq_select(seq,*args):
     inds = list(map(int,args))
@@ -57,18 +61,30 @@ def seq_select(seq,*args):
         return map(grab,seq)
     return (row[inds[0]] for row in seq)
 
-def lazy_uniq(seq):
+def lazy_uniq(seq,*_):
     last = None
     for x in seq:
         if x != last:
             yield x
             last = x
 
+def cjsh_map(seq,*args):
+    assert len(args) == 1, "can only map single fns, for now"
+    assert args[0] in stdlib, "can only map stdlib fns, for now."
+    return (map(stdlib[args[0]],x) for x in seq)
+
+def join(seq,*args):
+    sep = args[0]
+    for x in seq:
+        a = list(x)
+        print(a)
+        yield sep.join(a)
+
 stdlib = {
     #lazy
     '_slurp_': slurp,
     '_shell_': shellexec,
-    'grep': grep,'sub': sub,
+    'grep': grep,'sub': sub,'split': split,
     'head': lambda seq,*args: islice(seq,*map(int,args)),
     'inc': lambda seq: (x+1 for x in seq),
     'compact': lambda seq: (x for x in seq if x not in ['',None]),
@@ -78,6 +94,8 @@ stdlib = {
     'range': lambda _,*args: range(*map(int,args)),
     'select': seq_select,
     'luniq': lazy_uniq,
+    'map': cjsh_map,
+    'join': join,
     #non-lazy
     'sort': sorted,
     'uniq': set,
