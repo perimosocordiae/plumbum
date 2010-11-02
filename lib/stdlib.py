@@ -1,17 +1,20 @@
 
 import re,sys,signal
+from os.path import isfile
 from itertools import islice,chain
 from subprocess import Popen,PIPE
 from select import select
 
 def slurp(fname=''):
     if len(fname) > 0:
+        assert isfile(fname), "File '%s' does not exist"%fname
         return open(fname).readlines()
     return sys.stdin.readlines()
 
 # suppress 'broken pipe' error messages
 signal.signal(signal.SIGPIPE, signal.SIG_DFL)
-def shellexec(cmd):
+def shellexec(cmd,seq):
+    assert not seq or len(seq) == 0, "Passing input to shell cmds is NYI"
     proc = Popen(cmd,shell=True,stdout=PIPE)
     #return proc.stdout.readlines() <-- unfortunately, this doesn't work
     line = ''
@@ -40,9 +43,10 @@ def flatten(seq,*args):
         else:
             yield x
 
-def grep(seq,*args):
-    assert len(args) == 1 
-    regex = re.compile(args[0])
+def grep(seq,regex,*extra):
+    assert len(extra) == 0
+    if not hasattr(regex,'search'):
+        regex = re.compile(regex)
     return (x for x in seq if regex.search(x))
 
 def sub(seq,*args):
@@ -55,10 +59,12 @@ def split(seq,*args):
     return (regex.split(x) for x in seq)
 
 def seq_select(seq,*args):
+    assert len(args) > 0, "Must provide at least one 0-based index"
     inds = list(map(int,args))
     if len(inds) > 1:
         grab = lambda row: [row[i] for i in inds]
         return map(grab,seq)
+    # special case to avoid unnecessary nesting
     return (row[inds[0]] for row in seq)
 
 def lazy_uniq(seq,*_):
@@ -76,9 +82,7 @@ def cjsh_map(seq,*args):
 def join(seq,*args):
     sep = args[0]
     for x in seq:
-        a = list(x)
-        print(a)
-        yield sep.join(a)
+        yield sep.join(map(str,x)) # coerce to strs
 
 stdlib = {
     #lazy
@@ -86,7 +90,7 @@ stdlib = {
     '_shell_': shellexec,
     'grep': grep,'sub': sub,'split': split,
     'head': lambda seq,*args: islice(seq,*map(int,args)),
-    'inc': lambda seq: (x+1 for x in seq),
+    'inc': lambda seq: (int(x)+1 for x in seq),
     'compact': lambda seq: (x for x in seq if x not in ['',None]),
     'strip': lambda seq: (x.strip() for x in seq),
     'flatten': flatten,

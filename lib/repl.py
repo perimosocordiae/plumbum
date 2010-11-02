@@ -30,8 +30,11 @@ class Repl(cmd.Cmd):
             print('%s: stdlib function'%var)
         elif self.cjsh.symtab:
             print('%s: defined in symtab: %s'%(var,self.cjsh.symtab[var]))
+        elif var == '':
+            print('Symtab:',list(self.cjsh.symtab.keys()))
+            print('Stdlib:',list(stdlib.stdlib.keys()))
         else:
-            print('%s not found in stdlib or symtab')
+            print("'%s' not found in stdlib or symtab"%var)
 
     def do_run(self,line):
         'Run a CJSH source file'

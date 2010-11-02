@@ -4,13 +4,14 @@
 
 foo = strip | compact
 
-<stdlib.cj> | foo | grep /[aeiou]{2}/ | sort | count
+<stdlib.cj> | $foo | grep /[aeiou]{2}/ | sort | count
 
 `yes` | strip | head 10| uniq
 
 [[2,32],3,2,[3,[[3]]]] | flatten |sum
 
-yes = `yes` | strip
-range 100000000000 | zip $yes | flatten | head 10
+range 100000000000 | zip `yes` | flatten | head 10
+
+`yes` | zip ^range 5^ | count
 
 "stdlib tests passed" | println

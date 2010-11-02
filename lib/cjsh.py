@@ -1,33 +1,29 @@
 #!/usr/bin/env python3
 
-VERSION = '0.3'
+VERSION = '0.4'
 DEBUG = True
 
 from sys import argv,exit,exc_info
 from itertools import chain
 from ast import Program
-from repl import Repl # maybe do conditional import on this
 
-# all the magic is in here
-cjsh = Program()
-
-# different types of 'print_exc' based on debug flag
-if DEBUG:
-    from traceback import print_exc
-else:
-    def print_exc():
-        etype,estr = exc_info()[0:2]
-        print(etype.__name__,estr,sep=': ')
-
-def do_repl():
-    welcome = 'Welcome to CJSH version %s'%VERSION
-    if DEBUG: welcome += ' (debug)'
+def run_repl(cjsh):
+    from repl import Repl
+    # different types of 'print_exc' based on debug flag
+    if DEBUG:
+        from traceback import print_exc
+    else:
+        def print_exc():
+            etype,estr = exc_info()[0:2]
+            print(etype.__name__,estr,sep=': ')
+    welcome = 'Welcome to CJSH, ver %s%s'%(VERSION,' (debug)' if DEBUG else '')
     try: Repl(cjsh,print_exc).cmdloop(welcome)
     except KeyboardInterrupt: print() # move past the prompt
 
 if __name__ == '__main__':
+    cjsh = Program() # all the magic is in here
     if len(argv) == 1:
-        do_repl()
+        run_repl(cjsh)
     elif argv[1] == '-e':
         cjsh.parse_line(argv[2])
         cjsh.run()

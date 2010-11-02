@@ -5,7 +5,7 @@ Watch this space for pertinent info.
 
 ## Dependencies ##
  * Some flavor of Linux
-   * currently tested on Ubuntu 10.04
+   * definitely works on recent Ubuntus
  * Python 3.x
 
 ## Usage ##
@@ -27,9 +27,12 @@ Some 'real' code examples:
     # slurping a file, perl-ish regexen
     <foo.txt> | grep /bar/ | print
 
-    # inline shell commands
+    # inline (lazy!) shell commands
     `yes` | strip | head 10 | println ","
 
     # name a pipeline, use it later
     foo = uniq | sort
-    <> | foo | print
+	# slurp from standard in
+    <> | $foo | print
+
+For more examples, see the files in the `test` directory.
