@@ -1,15 +1,20 @@
 
 import re,sys,signal
 from os.path import isfile
+from urllib.request import urlopen
 from itertools import islice,chain
 from subprocess import Popen,PIPE
 from select import select
 
 def slurp(fname=''):
-    if len(fname) > 0:
-        assert isfile(fname), "File '%s' does not exist"%fname
+    if len(fname) == 0:
+        return sys.stdin.readlines()
+    if isfile(fname):
         return open(fname).readlines()
-    return sys.stdin.readlines()
+    try:
+        return (x.decode() for x in urlopen(fname).readlines())
+    except:
+        raise ValueError('%s is not a file or a web address'%fname)
 
 # suppress 'broken pipe' error messages
 signal.signal(signal.SIGPIPE, signal.SIG_DFL)
