@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 
-VERSION = '0.4'
+VERSION = '0.5'
 DEBUG = True
 
 from sys import argv,exit,exc_info
 from itertools import chain
-from ast import Program
+from ast_simple import Program as REPLProgram
+from ast_python import Program
 
 def run_repl(cjsh):
     from repl import Repl
@@ -23,13 +24,13 @@ def run_repl(cjsh):
 if __name__ == '__main__':
     cjsh = Program() # all the magic is in here
     if len(argv) == 1:
-        run_repl(cjsh)
+        run_repl(REPLProgram())
     elif argv[1] == '-e':
         cjsh.parse_line(argv[2])
         cjsh.run()
     elif argv[1] == '-c':
         cjsh.parse_file(argv[3])
-        cjsh.compile(argv[2])
+        cjsh.save_compiled(argv[2])
     else: #TODO: maybe use a flag to specify, or look at filename
         try: cjsh.parse_file(argv[1])
         except: cjsh.load_compiled(argv[1])

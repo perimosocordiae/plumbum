@@ -2,7 +2,7 @@
 import cmd,imp
 from glob import glob
 from itertools import chain
-import ast
+import ast_simple as ast
 import stdlib
 
 class Repl(cmd.Cmd):
