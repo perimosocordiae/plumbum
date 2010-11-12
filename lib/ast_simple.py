@@ -115,7 +115,7 @@ class Shell(Atom):
     def __init__( self,cmd):
         self.cmd = cmd
     def run(self,inputs,_):
-        return stdlib['_shell_'](self.cmd,inputs)
+        return stdlib['_shell_'](inputs,self.cmd)
     def __str__(self):
         return '`%s`'%self.cmd
 

@@ -5,8 +5,9 @@ DEBUG = True
 
 from sys import argv,exit,exc_info
 from itertools import chain
-from ast_simple import Program as REPLProgram
-from ast_python import Program
+from optparse import OptionParser
+#from ast_simple import Program
+from ast_python import Program, REPLProgram
 
 def run_repl(cjsh):
     from repl import Repl
@@ -22,17 +23,28 @@ def run_repl(cjsh):
     except KeyboardInterrupt: print() # move past the prompt
 
 if __name__ == '__main__':
-    cjsh = Program() # all the magic is in here
-    if len(argv) == 1:
-        run_repl(REPLProgram())
-    elif argv[1] == '-e':
+    op = OptionParser('Usage: %prog [options] file.cj',version=VERSION)
+    op.add_option('-e','--eval',metavar='CODE',help='Run CODE with cjsh')
+    op.add_option('-c','--compile',metavar='FILE',help='Compile to FILE')
+    (options, args) = op.parse_args()
+
+    if options.eval:
+        assert len(args) == 0, 'Additional args are meaningless with -e'
+        cjsh = Program()
         cjsh.parse_line(argv[2])
         cjsh.run()
-    elif argv[1] == '-c':
+    elif options.compile:
+        assert len(args) == 1, 'Need exactly 1 source file to compile'
+        cjsh = Program()
         cjsh.parse_file(argv[3])
         cjsh.save_compiled(argv[2])
+    elif len(args) == 0:
+        run_repl(REPLProgram())
+    elif len(args) > 1:
+        op.error('Only one source file at a time')
     else: #TODO: maybe use a flag to specify, or look at filename
-        try: cjsh.parse_file(argv[1])
-        except: cjsh.load_compiled(argv[1])
+        cjsh = Program()
+        try: cjsh.parse_file(args[0])
+        except: cjsh.load_compiled(args[0])
         cjsh.run()
 

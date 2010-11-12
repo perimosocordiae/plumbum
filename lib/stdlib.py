@@ -2,7 +2,7 @@
 import re,sys,signal
 from os.path import isfile
 from urllib.request import urlopen
-from itertools import islice,chain
+from itertools import islice,chain,tee
 from subprocess import Popen,PIPE
 from select import select
 
@@ -18,7 +18,7 @@ def slurp(fname=''):
 
 # suppress 'broken pipe' error messages
 signal.signal(signal.SIGPIPE, signal.SIG_DFL)
-def shellexec(cmd,seq):
+def shellexec(seq,cmd):
     assert not seq or len(seq) == 0, "Passing input to shell cmds is NYI"
     proc = Popen(cmd,shell=True,stdout=PIPE)
     #return proc.stdout.readlines() <-- unfortunately, this doesn't work
@@ -86,8 +86,15 @@ def cjsh_map(seq,*args):
 
 def join(seq,*args):
     sep = args[0]
-    for x in seq:
-        yield sep.join(map(str,x)) # coerce to strs
+    seq1,seq2 = tee(seq) # just in case
+    try:
+        for x in seq1:
+            yield sep.join(map(str,x)) # coerce to strs
+    except TypeError as e:
+        if 'not iterable' in e.args[0]:
+            yield sep.join(map(str,seq2))
+        else:
+            raise e
 
 stdlib = {
     #lazy

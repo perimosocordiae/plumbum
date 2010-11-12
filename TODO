@@ -1,5 +1,15 @@
 
+fix the assignment mechanism
+ - save values to a symtab, as before, probably
+
+rewrite builtins as AST nodes
+ - avoid all the hash lookups at runtime
+ - allow agressive streamlining / static checking
+
+compile-time optimizations
+ - should be easier with a real (python!) AST
+ - add type annotations
+
 even more test cases
 scan/split
 'prelude'-style stdlib in CJSH
-compile-time optimizations
