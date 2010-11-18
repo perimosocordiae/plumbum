@@ -48,16 +48,21 @@ class Program:
             return exec(self.code)
         fix_missing_locations(self.tree)
         #print(unparse(self.tree)) # super useful for debugging
-        exec(compile(self.tree,self.fname,'exec'))
+        exec(compile(self.tree,self.fname,'exec'),globals(),globals())
 
 class REPLProgram(Program):
     def run(self):
         assert len(self.tree.body) == 1
         #print(unparse(self.tree)) # super useful for debugging
         stmt = self.tree.body.pop()
-        stree = _ast.Expression(body=stmt.value)
-        fix_missing_locations(stree)
-        return eval(compile(stree,'<repl>','eval'))
+        if type(stmt) is _ast.Assign:
+            stree = _ast.Module(body=[stmt])
+            fix_missing_locations(stree)
+            exec(compile(stree,'<repl>','exec'), globals(), globals())
+        else:
+            stree = _ast.Expression(body=stmt.value)
+            fix_missing_locations(stree)
+            return eval(compile(stree,'<repl>','eval'))
 
 def Statement(line):
     c = ast_select('dummy([])') # call w/ empty list as initial seq
@@ -66,7 +71,6 @@ def Statement(line):
     s.col_offset = 1
     return s
 
- #TODO: fix!
 def Assignment(lhs,rhs):
     a = ast_parse(lhs+' = dummy').body[0]
     a.value = Expression(rhs)
@@ -76,18 +80,15 @@ def Assignment(lhs,rhs):
 def fold_ast(rpipe):
     a = rpipe[-1]
     if type(a) is not Literal:
-        c = ast_select('dummy()')
-        c.func = a.value
+        c = a.value
         if len(rpipe) > 1:
-            c.args = [fold_ast(rpipe[:-1])]
-        elif type(a) is Slurp:
-            c.args = [] # slurps get no input
-        else:
-            c.args = [ast_select('initial')]
+            c.args[0] = fold_ast(rpipe[:-1])
+        elif type(a) is not Slurp: # slurps get no input
+            c.args[0] = ast_select('initial')
         return c
     elif len(rpipe) == 1:
         return a.value
-    else: raise Exception('Literal atom not at beginning of pipe!')
+    else: raise Exception('Invalid location for literal: %s'%a)
 
 def ast_select(s):
     return ast_parse(s).body[0].value
@@ -132,14 +133,10 @@ class Function:
         self.cmd, args = lex_atom(atom)
         assert self.cmd in stdlib
         self.args = [parse_atom(a) for a in args]
-        self.value = ast_select(
-                'lambda inputs: stdlib[dummy](inputs)')
-        self.value.body.func.slice.value = _ast.Str(s=self.cmd)
+        self.value = ast_select('stdlib[dummy]([])') # call-exp
+        self.value.func.slice.value = _ast.Str(s=self.cmd)
         for a in self.args:
-            if type(a) is Literal:
-                self.value.body.args.append(a.value)
-            else:
-                self.value.body.args.append(ast_ctor('d([])',func=a.value))
+            self.value.args.append(a.value)
 
     def __str__(self):
         return self.cmd+'  '+' '.join(map(str,self.args))
@@ -159,23 +156,24 @@ class Literal:
 
 class Reference:
     def __init__(self,ref): 
-        self.value=_ast.Name(id=ref,ctx=_ast.Load())
+        self.value = ast_ctor('dummy([])')
+        self.value.func.id = ref
     def __str__(self):
-        return '$'+self.value.id
+        return '$'+self.value.func.id
 
 class Slurp:
     def __init__(self,fname):
         self.fname = fname
-        self.value = ast_select("lambda: stdlib['_slurp_']('dummy')")
-        self.value.body.args[0].s = fname
+        self.value = ast_select("stdlib['_slurp_'](dummy)")
+        self.value.args[0] = _ast.Str(s=fname)
     def __str__(self):
         return '<%s>' % self.fname
 
 class Shell:
     def __init__(self,cmd):
         self.cmd = cmd
-        self.value = ast_select("lambda inputs: stdlib['_shell_'](inputs)")
-        self.value.body.args.append(_ast.Str(s=self.cmd))
+        self.value = ast_select("stdlib['_shell_']([],dummy)")
+        self.value.args[1] = _ast.Str(s=self.cmd)
     def __str__(self):
         return '`%s`'%self.cmd
 

@@ -1,7 +1,4 @@
 
-fix the assignment mechanism
- - save values to a symtab, as before, probably
-
 rewrite builtins as AST nodes
  - avoid all the hash lookups at runtime
  - allow agressive streamlining / static checking
