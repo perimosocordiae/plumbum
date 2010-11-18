@@ -5,6 +5,7 @@ from shlex import shlex
 from functools import reduce
 from marshal import load,dump # for saving compiled files
 from unparse import unparse
+from stdlib import * # to not break inlined builtins
 
 stdlib = {}
 
@@ -94,6 +95,9 @@ def fold_ast(rpipe):
             atom.args[0] = ast_select('initial')
         return atom
     if len(rpipe) > 1:
+        if type(atom) is _ast.Name:
+            a = atom.id
+            raise Exception("Invalid name: '%s'. Did you mean '$%s'?"%(a,a))
         raise Exception('Invalid location for literal: %s'%atom)
     return atom
 
