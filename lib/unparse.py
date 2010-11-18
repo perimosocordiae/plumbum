@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """unparse.py: taken from a Python examples repo, then patched to run py3k.
+Warning! Not a complete implementation
 Usage: unparse.py <path to source file>"""
 import sys
 import ast

@@ -4,15 +4,21 @@ from ast import parse as ast_parse, fix_missing_locations, dump as ast_dump
 from shlex import shlex
 from functools import reduce
 from marshal import load,dump # for saving compiled files
-from stdlib import stdlib
 from unparse import unparse
 
+stdlib = {}
+
 class Program:
-    def __init__(self):
+    def __init__(self, current_stdlib):
+        self.refresh_stdlib(current_stdlib)
         self.tree = _ast.Module(body=[])
         self.tree.lineno = 1
         self.tree.col_offset = 1
         self.fname = '<>'
+
+    def refresh_stdlib(self, new_stdlib):
+        global stdlib
+        stdlib = new_stdlib
 
     def parse_file(self,fname):
         self.fname = fname
@@ -51,9 +57,10 @@ class Program:
         exec(compile(self.tree,self.fname,'exec'),globals(),globals())
 
 class REPLProgram(Program):
-    def run(self):
-        assert len(self.tree.body) == 1
-        #print(unparse(self.tree)) # super useful for debugging
+    def run(self, debug=False):
+        if debug:
+            assert len(self.tree.body) == 1
+            print(unparse(self.tree))
         stmt = self.tree.body.pop()
         if type(stmt) is _ast.Assign:
             stree = _ast.Module(body=[stmt])
@@ -72,32 +79,27 @@ def Statement(line):
     return s
 
 def Assignment(lhs,rhs):
-    a = ast_parse(lhs+' = dummy').body[0]
-    a.value = Expression(rhs)
-    a.col_offset = 1
-    return a
+    asn = ast_parse(lhs+' = dummy').body[0]
+    asn.value = Expression(rhs)
+    asn.col_offset = 1
+    return asn
 
+ # woo recursion! TODO: rewrite as a fold
 def fold_ast(rpipe):
-    a = rpipe[-1]
-    if type(a) is not Literal:
-        c = a.value
+    atom = rpipe[-1]
+    if type(atom) is _ast.Call:
         if len(rpipe) > 1:
-            c.args[0] = fold_ast(rpipe[:-1])
-        elif type(a) is not Slurp: # slurps get no input
-            c.args[0] = ast_select('initial')
-        return c
-    elif len(rpipe) == 1:
-        return a.value
-    else: raise Exception('Invalid location for literal: %s'%a)
-
-def ast_select(s):
-    return ast_parse(s).body[0].value
+            atom.args[0] = fold_ast(rpipe[:-1])
+        elif type(atom.args[0]) is not _ast.Str: # slurps get no input
+            atom.args[0] = ast_select('initial')
+        return atom
+    if len(rpipe) > 1:
+        raise Exception('Invalid location for literal: %s'%atom)
+    return atom
 
 def Expression(expr): 
-    lmda = ast_select('lambda initial: 1')
     pipe = [parse_atom(atom) for atom in expr.split('|')]
-    lmda.body=fold_ast(pipe)
-    return lmda
+    return ast_ctor('lambda initial: 1', body=fold_ast(pipe))
 
 def parse_atom(atom):
     atom = atom.strip()
@@ -109,10 +111,10 @@ def parse_atom(atom):
     if ref:   return Reference(ref.group(1))
     inline = inline_expr.match(atom)
     if inline: return parse_atom(inline.group(1))
-    try: return Function(atom)
-    except AssertionError: pass 
-    #print('literal: [%s]'%atom)
-    return Literal(atom)
+    try:
+        return Builtin(atom)
+    except KeyError:
+        return Literal(atom)
 
 def lex_atom(atom):
     lex = shlex(atom,posix=False)
@@ -122,60 +124,41 @@ def lex_atom(atom):
     return cmd,args
 
  # for convenience...
+def ast_select(s):
+    return ast_parse(s).body[0].value
+
 def ast_ctor(toparse,**kwargs):
     c = ast_select(toparse)
     for k,v in kwargs.items():
         setattr(c,k,v)
     return c
 
-class Function:
-    def __init__(self,atom):
-        self.cmd, args = lex_atom(atom)
-        assert self.cmd in stdlib
-        self.args = [parse_atom(a) for a in args]
-        self.value = ast_select('stdlib[dummy]([])') # call-exp
-        self.value.func.slice.value = _ast.Str(s=self.cmd)
-        for a in self.args:
-            self.value.args.append(a.value)
+def Builtin(atom):
+    cmd, args = lex_atom(atom)
+    func = stdlib[cmd]
+    if type(func) is str: # inlines
+        value = ast_select('(%s)([])' % func)
+    else:
+        value = ast_select('stdlib["%s"]([])' % cmd)
+    value.args.extend(parse_atom(a) for a in args)
+    return value
 
-    def __str__(self):
-        return self.cmd+'  '+' '.join(map(str,self.args))
+def Literal(atom):
+    if atom.startswith('/') and atom.endswith('/'):
+        return ast_select("re.compile(r'%s')" % atom[1:-1])
+    try: 
+        return ast_select(atom)
+    except SyntaxError:
+        return _ast.Str(s=atom)
 
-class Literal:
-    def __init__(self,atom):
-        if atom.startswith('/') and atom.endswith('/'):
-            self.value=ast_select('re.compile(dummy)')
-            self.value.args[0] = _ast.Str(s=atom[1:-1])
-        else: 
-            try: 
-                self.value=ast_select(atom)
-            except SyntaxError:
-                self.value=_ast.Str(s=atom)
-    def __str__(self):
-        return str(self.value)
+def Reference(name):
+    return ast_select(name+'([])')
 
-class Reference:
-    def __init__(self,ref): 
-        self.value = ast_ctor('dummy([])')
-        self.value.func.id = ref
-    def __str__(self):
-        return '$'+self.value.func.id
+def Slurp(fname):
+    return ast_select("stdlib['_slurp_']('%s')" % fname)
 
-class Slurp:
-    def __init__(self,fname):
-        self.fname = fname
-        self.value = ast_select("stdlib['_slurp_'](dummy)")
-        self.value.args[0] = _ast.Str(s=fname)
-    def __str__(self):
-        return '<%s>' % self.fname
-
-class Shell:
-    def __init__(self,cmd):
-        self.cmd = cmd
-        self.value = ast_select("stdlib['_shell_']([],dummy)")
-        self.value.args[1] = _ast.Str(s=self.cmd)
-    def __str__(self):
-        return '`%s`'%self.cmd
+def Shell(cmd):
+    return ast_select("stdlib['_shell_']([],'%s')" % cmd)
 
 ref_expr   = re.compile('\$(\w+)')
 slurp_expr = re.compile('<\s*(.*?)\s*>')

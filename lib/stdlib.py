@@ -97,27 +97,29 @@ def join(seq,*args):
             raise e
 
 stdlib = {
-    #lazy
+    # lazy
     '_slurp_': slurp,
     '_shell_': shellexec,
     'grep': grep,'sub': sub,'split': split,
-    'head': lambda seq,*args: islice(seq,*map(int,args)),
-    'inc': lambda seq: (int(x)+1 for x in seq),
-    'compact': lambda seq: (x for x in seq if x not in ['',None]),
-    'strip': lambda seq: (x.strip() for x in seq),
     'flatten': flatten,
-    'zip': zip,
-    'range': lambda _,*args: range(*map(int,args)),
     'select': seq_select,
     'luniq': lazy_uniq,
     'map': cjsh_map,
     'join': join,
-    #non-lazy
-    'sort': sorted,
-    'uniq': set,
-    'sum': sum,
-    'count': lambda seq: sum(1 for _ in seq),
+    # inlines
+    'inc':     'lambda seq: (int(x)+1 for x in seq)',
+    'zip':     'zip',
+    'head':    'lambda seq,*args: islice(seq,*map(int,args))',
+    'strip':   'lambda seq: (x.strip() for x in seq)',
+    'range':   'lambda _,*args: range(*map(int,args))',
+    'compact': 'lambda seq: (x for x in seq if x)',
+    # non-lazy
     'print': cjsh_print,
-    'println': cjsh_println
+    'println': cjsh_println,
+    # inlines
+    'sort':  'sorted',
+    'uniq':  'set',
+    'sum':   'sum',
+    'count': 'lambda seq: sum(1 for _ in seq)',
     }
 

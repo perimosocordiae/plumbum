@@ -2,24 +2,27 @@
 import cmd,imp
 from glob import glob
 from itertools import chain
-import ast_simple as ast
+from ast_python import REPLProgram
+from traceback import print_exc
 import stdlib
 
 class Repl(cmd.Cmd):
-    def __init__(self,program,print_exc):
+    def __init__(self,debug=False):
         super().__init__()
-        self.cjsh = program # instance of ast.Program
-        self.print_exc = print_exc # function to print an exception
+        self.cjsh = REPLProgram(stdlib.stdlib)
+        self.debug = debug
         self.prompt = '>> '
+        if not debug: # use a terser exception printer
+            print_exc = lambda: print(exc_info()[0:2],sep=': ')
 
     def do_reload(self,line):
         'Reload the stdlib module'
         try:
             imp.reload(stdlib)
-            ast.stdlib = stdlib.stdlib
+            self.cjsh.stdlib = stdlib.stdlib
         except:
             print('Error reloading stdlib:')
-            self.print_exc()
+            print_exc()
         else:
             print('Success: stdlib reloaded')
     
@@ -39,7 +42,7 @@ class Repl(cmd.Cmd):
     def do_run(self,line):
         'Run a CJSH source file'
         self.cjsh.parse_file(line.strip())
-        self.cjsh.run()
+        self.cjsh.run(self.debug)
 
     def complete_run(self,text,line,beg,end):
         return glob(text+'*')
@@ -53,17 +56,17 @@ class Repl(cmd.Cmd):
             self.cjsh.parse_line(line)
         except:
             print("Error parsing:",line)
-            self.print_exc()
+            print_exc()
             return
         try:
-            res = self.cjsh.run()
+            res = self.cjsh.run(self.debug)
             if not res: return
             if hasattr(res,'__iter__'): print(list(res))
             else: print(res)
         except KeyboardInterrupt: pass # keep the interpreter going
         except:
             print("Error running:",line)
-            self.print_exc()
+            print_exc()
 
     def completedefault(self,text,line,beg,end):
         lch,rch = line.rfind('<'),line.rfind('>')
