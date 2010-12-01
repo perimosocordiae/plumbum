@@ -2,7 +2,7 @@
 import cmd,imp
 from glob import glob
 from itertools import chain
-from ast_python import REPLProgram
+from ast_cjsh import REPLProgram
 from traceback import print_exc
 import stdlib
 

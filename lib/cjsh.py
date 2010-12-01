@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 
-VERSION = '0.5'
+VERSION = '0.6'
 
 from sys import argv,exit,exc_info
 from itertools import chain
 from optparse import OptionParser
-from ast_python import Program
+from ast_cjsh import Program
 from stdlib import stdlib
 
 if __name__ == '__main__':

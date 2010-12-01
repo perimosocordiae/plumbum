@@ -7,6 +7,7 @@ Watch this space for pertinent info.
  * Some flavor of Linux
    * definitely works on recent Ubuntus
  * Python 3.x
+ * PyParsing
 
 ## Usage ##
  * Start up a REPL: `./cjsh`

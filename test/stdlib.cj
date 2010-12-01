@@ -13,6 +13,6 @@ foo = strip | compact
 
 range 100000000000 | zip `yes` | flatten | head 10
 
-`yes` | zip ^range 5^ | count
+`yes` | zip {range 5} | count
 
 "\n\nstdlib tests passed\n\n" | println
