@@ -1,7 +1,6 @@
 
 import re, sys, ast
-from collections import Counter
-from functools import reduce
+from optimizer import Optimizer
 from marshal import load,dump # for saving compiled files
 from unparse import unparse
 from stdlib import * # to not break inlined builtins
@@ -84,46 +83,3 @@ class REPLProgram(Program):
         self.tree.body = []
         return result
 
-
-class Optimizer(ast.NodeTransformer):
-    def __init__(self):
-        self.redo = False
-
-    def visit_Call(self,node):
-        # we only want to mutate lambdas, but we need access to args too
-        if type(node.func) is not ast.Lambda: return node
-        params = [a.arg for a in node.func.args.args]
-        body = node.func.body
-        # count up which names are used in the body
-        self.used = Counter()
-        self.generic_visit(body)
-        # if no parameters are referenced in the body, unwrap the body
-        if len(params & self.used.keys()) == 0:
-            self.redo = True
-            return body
-        # check for inline-able arguments (only referenced once)
-        self.inlines = {}
-        for p,a in zip(params,node.args):
-            if self.used[p] != 1: continue
-            self.inlines[p] = a
-            idx = params.index(p)
-            del node.func.args.args[idx]
-            del node.args[idx]
-        if len(self.inlines) > 0:
-            self.generic_visit(body)  # make a second pass to mutate
-        del self.inlines
-        return node
-
-    def visit_Name(self,node):
-        # don't bother with store operations
-        if type(node.ctx) is not ast.Load: return node
-        if hasattr(self,'inlines'):
-            # second pass, mutation step
-            if node.id in self.inlines:
-                # replace node with the passed arg
-                self.redo = True
-                return self.inlines[node.id]
-        else:
-            # first pass, just counting for now
-            self.used[node.id] += 1
-        return node

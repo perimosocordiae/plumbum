@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-VERSION = '0.6'
+VERSION = '0.7'
 
 from sys import argv,exit,exc_info
 from itertools import chain
