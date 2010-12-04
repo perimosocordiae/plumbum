@@ -19,26 +19,13 @@ class Repl(cmd.Cmd):
         'Reload the stdlib module'
         try:
             imp.reload(stdlib)
-            self.cjsh.stdlib = stdlib.stdlib
+            self.cjsh.refresh_stdlib(stdlib.stdlib)
         except:
             print('Error reloading stdlib:')
             print_exc()
         else:
             print('Success: stdlib reloaded')
     
-    def do_show(self,line):
-        'Show the current definition of a var'
-        var = line.strip()
-        if var in stdlib.stdlib:
-            print('%s: stdlib function'%var)
-        elif self.cjsh.symtab:
-            print('%s: defined in symtab: %s'%(var,self.cjsh.symtab[var]))
-        elif var == '':
-            print('Symtab:',list(self.cjsh.symtab.keys()))
-            print('Stdlib:',list(stdlib.stdlib.keys()))
-        else:
-            print("'%s' not found in stdlib or symtab"%var)
-
     def do_run(self,line):
         'Run a CJSH source file'
         self.cjsh.parse_file(line.strip())
@@ -73,8 +60,8 @@ class Repl(cmd.Cmd):
         if lch >= 0 and rch < lch:
             d = len(line[lch+1:]) - len(text) # super hax
             return [f[d:] for f in glob('%s*'%line[lch+1:])]
-        comps = chain(stdlib.stdlib.keys(),self.cjsh.symtab.keys())
-        return sorted(k for k in comps if k.startswith(text))
+        funcs = (k for k in stdlib.stdlib.keys() if not k.startswith('_'))
+        return sorted(k for k in funcs if k.startswith(text))
 
     def emptyline(self): pass
 
