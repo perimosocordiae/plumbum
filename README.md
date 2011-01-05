@@ -14,9 +14,9 @@ programming languages.
 ## Usage ##
  * Start up a REPL: `./pb`
  * Eval one line: `./pb -e '"hello world" | println'`
- * Run a program: `./pb foo.cj`
- * Compile a program: `./pb -c foo.cjc foo.cj`
- * Run a compiled program: `./pb foo.cjc`
+ * Run a program: `./pb foo.pb`
+ * Compile a program: `./pb -c foo.pbc foo.pb`
+ * Run a compiled program: `./pb foo.pbc`
 
 ## Code Examples ##
 Some 'real' code examples:
