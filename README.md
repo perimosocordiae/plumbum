@@ -1,7 +1,9 @@
 
-# CJSH #
+# Plumbum #
 
-Watch this space for pertinent info.
+An experimental, pipe-oriented programming language, designed to fill the
+gap between classic Unix shell one-liners and powerful general-purpose
+programming languages.
 
 ## Dependencies ##
  * Some flavor of Linux
@@ -10,11 +12,11 @@ Watch this space for pertinent info.
  * PyParsing
 
 ## Usage ##
- * Start up a REPL: `./cjsh`
- * Eval one line: `./cjsh -e '"hello world" | println'`
- * Run a program: `./cjsh foo.cj`
- * Compile a program: `./cjsh -c foo.cjc foo.cj`
- * Run a compiled program: `./cjsh foo.cjc`
+ * Start up a REPL: `./pb`
+ * Eval one line: `./pb -e '"hello world" | println'`
+ * Run a program: `./pb foo.cj`
+ * Compile a program: `./pb -c foo.cjc foo.cj`
+ * Run a compiled program: `./pb foo.cjc`
 
 ## Code Examples ##
 Some 'real' code examples:

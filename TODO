@@ -9,4 +9,4 @@ compile-time optimizations
 
 even more test cases
 scan/split
-'prelude'-style stdlib in CJSH
+'prelude'-style stdlib in Plumbum

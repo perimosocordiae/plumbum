@@ -1,8 +1,8 @@
 set -e
 PROGRAM='[1,5,3,7,2,4,2,1] | sort | println ","'
-dashE=`../cjsh -e "$PROGRAM"`
-echo $PROGRAM | ../cjsh -c ctest.cjc -
-comp=`../cjsh ctest.cjc`
+dashE=`../pb -e "$PROGRAM"`
+echo $PROGRAM | ../pb -c ctest.pbc -
+comp=`../pb ctest.pbc`
 if [ $comp != $dashE ]; then
 	echo "Compilation test fail"
 	echo $dashE
@@ -10,4 +10,4 @@ if [ $comp != $dashE ]; then
 else
 	echo "Compilation test success"
 fi
-rm -f ctest.cjc
+rm -f ctest.pbc

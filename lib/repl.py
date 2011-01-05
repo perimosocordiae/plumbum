@@ -2,14 +2,14 @@
 import cmd,imp
 from glob import glob
 from itertools import chain
-from ast_cjsh import REPLProgram
+from ast_plumbum import REPLProgram
 from traceback import print_exc
 import stdlib
 
 class Repl(cmd.Cmd):
     def __init__(self,debug=False):
         super().__init__()
-        self.cjsh = REPLProgram(stdlib.stdlib)
+        self.plumbum = REPLProgram(stdlib.stdlib)
         self.debug = debug
         self.prompt = '>> '
         if not debug: # use a terser exception printer
@@ -19,7 +19,7 @@ class Repl(cmd.Cmd):
         'Reload the stdlib module'
         try:
             imp.reload(stdlib)
-            self.cjsh.refresh_stdlib(stdlib.stdlib)
+            self.plumbum.refresh_stdlib(stdlib.stdlib)
         except:
             print('Error reloading stdlib:')
             print_exc()
@@ -27,9 +27,9 @@ class Repl(cmd.Cmd):
             print('Success: stdlib reloaded')
     
     def do_run(self,line):
-        'Run a CJSH source file'
-        self.cjsh.parse_file(line.strip())
-        self.cjsh.run(self.debug)
+        'Run a Plumbum source file'
+        self.plumbum.parse_file(line.strip())
+        self.plumbum.run(self.debug)
 
     def complete_run(self,text,line,beg,end):
         return glob(text+'*')
@@ -40,13 +40,13 @@ class Repl(cmd.Cmd):
 
     def default(self,line):
         try:
-            self.cjsh.parse_line(line)
+            self.plumbum.parse_line(line)
         except:
             print("Error parsing:",line)
             print_exc()
             return
         try:
-            res = self.cjsh.run(self.debug)
+            res = self.plumbum.run(self.debug)
             if not res: return
             if hasattr(res,'__iter__'): print(list(res))
             else: print(res)

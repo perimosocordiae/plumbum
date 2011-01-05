@@ -32,12 +32,12 @@ def shellexec(seq,cmd):
             line = ''
         else: line += c
 
-def cjsh_print(seq,*args):
+def pb_print(seq,*args):
     sep = re.sub(r'\\n',"\n",args[0]) if len(args) > 0 else '' #hax
     for x in seq:
         print(x,sep='',end=sep)
-def cjsh_println(seq,*args):
-    cjsh_print(seq,*args)
+def pb_println(seq,*args):
+    pb_print(seq,*args)
     print()
 
 def flatten(seq,*args):
@@ -79,7 +79,7 @@ def lazy_uniq(seq,*_):
             yield x
             last = x
 
-def cjsh_map(seq,*args):
+def pb_map(seq,*args):
     assert len(args) == 1, "can only map single fns, for now"
     assert args[0] in stdlib, "can only map stdlib fns, for now."
     return (map(stdlib[args[0]],x) for x in seq)
@@ -104,7 +104,7 @@ stdlib = {
     'flatten': flatten,
     'select': seq_select,
     'luniq': lazy_uniq,
-    'map': cjsh_map,
+    'map': pb_map,
     'join': join,
     # inlines
     'inc':     'lambda seq: (int(x)+1 for x in seq)',
@@ -114,8 +114,8 @@ stdlib = {
     'range':   'lambda _,*args: range(*map(int,args))',
     'compact': 'lambda seq: (x for x in seq if x)',
     # non-lazy
-    'print': cjsh_print,
-    'println': cjsh_println,
+    'print': pb_print,
+    'println': pb_println,
     # inlines
     'sort':  'sorted',
     'uniq':  'set',
