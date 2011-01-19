@@ -71,15 +71,19 @@ class REPLProgram(Program):
             self.optimize() #maybe not for the repl... later
             print(unparse(self.tree).strip())
         result = None
-        for stmt in self.tree.body:
-            if type(stmt) is ast.Assign:
-                stree = ast.Module(body=[stmt])
-                ast.fix_missing_locations(stree)
-                exec(compile(stree,'<repl>','exec'), globals(), globals())
-            else:
-                stree = ast.Expression(body=stmt.value)
-                ast.fix_missing_locations(stree)
-                result = eval(compile(stree,'<repl>','eval'))
+        try: # ugly, but it makes sure we clear out self.tree.body
+            for stmt in self.tree.body:
+                if type(stmt) is ast.Assign:
+                    stree = ast.Module(body=[stmt])
+                    ast.fix_missing_locations(stree)
+                    exec(compile(stree,'<repl>','exec'), globals(), globals())
+                else:
+                    stree = ast.Expression(body=stmt.value)
+                    ast.fix_missing_locations(stree)
+                    result = eval(compile(stree,'<repl>','eval'))
+        except Exception as e:
+            self.tree.body = []
+            raise e
         self.tree.body = []
         return result
 

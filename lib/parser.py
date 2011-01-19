@@ -1,6 +1,6 @@
 
 import re,sys,_ast
-from ast import parse as ast_parse 
+from ast import parse as ast_parse
 from pyparsing import *
 from stdlib import stdlib # for inlining purposes
 
@@ -31,12 +31,13 @@ def Statement(sides):
     return s
 
  # woo recursion! TODO: rewrite as a fold
+DUMMY = 0xdead
 def fold_ast(rpipe):
     atom = rpipe[-1]
     if type(atom) is _ast.Call:
         if len(rpipe) > 1:
             atom.args[0] = fold_ast(rpipe[:-1])
-        elif type(atom.args[0]) is not _ast.Str: # slurps get no input
+        elif atom.args[0] == DUMMY:
             atom.args[0] = ast_select('initial')
         return atom
     if len(rpipe) > 1:
@@ -49,13 +50,15 @@ def fold_ast(rpipe):
 def Expression(pipe): 
     return ast_ctor('lambda initial: 1', body=fold_ast(pipe))
 
-def Builtin(atom):
+def Function(atom):
     cmd, args = atom[0], atom[1:]
+    if cmd not in stdlib: # hope it's a user-defined!
+        return ast_ctor(cmd+'()', args=[DUMMY])
     func = stdlib[cmd]
     if type(func) is str: # inlines
-        value = ast_select('(%s)([])' % func)
+        value = ast_ctor('(%s)()' % func, args=[DUMMY])
     else:
-        value = ast_select('stdlib["%s"]([])' % cmd)
+        value = ast_ctor('stdlib["%s"]()' % cmd, args=[DUMMY])
     value.args.extend(args)
     return value
 
@@ -65,15 +68,21 @@ def Regex(patt):
 def String(s):
     return ast_select(s)
 
+def Range(args): #TODO: bug! ranges of form [1,4..] are interpreted [1..4]
+    start = args[0]
+    second = args[1] if len(args) > 2 else None
+    last = args[-1] if len(args) > 1 else None
+    step = Integer(second.n - start.n) if second else Integer(1)
+    if last:
+        last = Integer(last.n + (1 if step.n > 0 else -1)) # make it inclusive
+        return ast_ctor("range()", args=[start, last, step])
+    return ast_ctor("count()", args=[start, step])
+
 def List(lst):
     return _ast.List(elts=list(lst), ctx=_ast.Load())
 
 def Integer(i):
     return _ast.Num(n=int(i))
-
-def Reference(name):
-    # note: name[0] == '$'
-    return ast_select(name[1:]+'([])')
 
 def Inline(expr):
     #TODO: there's a subtle bug here: expr.body has a free variable 'initial'
@@ -84,7 +93,7 @@ def Slurp(fname):
     return ast_select("stdlib['_slurp_']('%s')" % fname)
 
 def Shell(cmd):
-    return ast_select("stdlib['_shell_']([],'%s')" % cmd)
+    return ast_select("stdlib['_shell_']('%s')" % cmd)
 
 
 ###########
@@ -99,20 +108,22 @@ def generate_grammar(): # entirely for decluttering the global namespace
     LCURLY,RCURLY,LSQUARE,RSQUARE,EQ,DOLLAR,PIPE,SEMI = map(Suppress,'{}[]=$|;')
     slurp = parser(QuotedString('<',endQuoteChar='>'),Slurp)
     shell = parser(QuotedString('`'),Shell)
-    reference = parser(Word('$', alphanums),Reference)
     expression = parser(Forward(),Expression)
     inline = parser(LCURLY + expression + RCURLY,Inline)
     regex = parser(QuotedString('/'),Regex)
     integer = parser(Word('-123456789',nums),Integer)
     literal = Forward()
+    rangelit = (LSQUARE + integer + Optional(Suppress(',') + integer) + 
+                Suppress('..') + Optional(integer) + RSQUARE)
+    rangelit.setParseAction(Range)
     listlit = LSQUARE + Optional(delimitedList(literal)) + RSQUARE
     listlit.setParseAction(List)
     string = parser(quotedString,String)
-    literal << (string | regex | integer | listlit)
+    literal << (string | regex | integer | listlit | rangelit)
     identifier = Word(alphas, alphanums)
     atom = Forward()
-    builtin = parser(Group(identifier + ZeroOrMore(atom)),Builtin)
-    atom << (slurp | shell | reference | inline | literal | builtin)
+    function = parser(Group(identifier + ZeroOrMore(atom)),Function)
+    atom << (slurp | shell | inline | literal | function)
     expression << Group(atom + ZeroOrMore(PIPE + atom))
     statement = parser(
             Group(Optional(identifier + EQ, default=None) + expression),

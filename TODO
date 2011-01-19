@@ -7,6 +7,6 @@ compile-time optimizations
  - should be easier with a real (python!) AST
  - add type annotations
 
-even more test cases
+even more test cases!
 scan/split
 'prelude'-style stdlib in Plumbum

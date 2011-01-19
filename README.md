@@ -25,7 +25,10 @@ Some 'real' code examples:
     "hello, world!" | println
 
     # list literals
-    [2,4,1,4,2] | uniq | println
+    [2,4,1,4,2] | uniq
+	
+	# lazy range literals (ala Haskell)
+	[4..] | zip [10,9..1] | flatten
 
     # slurping a file, perl-ish regexen
     <foo.txt> | grep /bar/ | print
@@ -36,6 +39,6 @@ Some 'real' code examples:
     # name a pipeline, use it later
     foo = uniq | sort
 	# slurp from standard in
-    <> | $foo | print
+    <> | foo | print
 
 For more examples, see the files in the `test` directory.

@@ -2,7 +2,7 @@
 import re,sys,signal
 from os.path import isfile
 from urllib.request import urlopen
-from itertools import islice,chain,tee
+from itertools import islice,chain,tee,count,repeat
 from subprocess import Popen,PIPE
 from select import select
 
@@ -18,8 +18,7 @@ def slurp(fname=''):
 
 # suppress 'broken pipe' error messages
 signal.signal(signal.SIGPIPE, signal.SIG_DFL)
-def shellexec(seq,cmd):
-    assert not seq or len(seq) == 0, "Passing input to shell cmds is NYI"
+def shellexec(cmd):
     proc = Popen(cmd,shell=True,stdout=PIPE)
     #return proc.stdout.readlines() <-- unfortunately, this doesn't work
     line = ''
@@ -108,10 +107,12 @@ stdlib = {
     'join': join,
     # inlines
     'inc':     'lambda seq: (int(x)+1 for x in seq)',
+    'ord':     'lambda seq: map(ord,seq)',
+    'chr':     'lambda seq: map(chr,seq)',
     'zip':     'zip',
+    'repeat':  'lambda _, arg: repeat(arg)',
     'head':    'lambda seq,*args: islice(seq,*map(int,args))',
     'strip':   'lambda seq: (x.strip() for x in seq)',
-    'range':   'lambda _,*args: range(*map(int,args))',
     'compact': 'lambda seq: (x for x in seq if x)',
     # non-lazy
     'print': pb_print,
