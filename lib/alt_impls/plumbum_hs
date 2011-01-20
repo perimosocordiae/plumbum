@@ -1,0 +1,7 @@
+#!/bin/sh
+
+while true; do
+	read -p ">> " line
+	if [ "$line" = '' ]; then exit; fi
+	echo $line | runhaskell compile.hs | runhaskell
+done
