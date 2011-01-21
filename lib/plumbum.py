@@ -12,6 +12,7 @@ if __name__ == '__main__':
     op = OptionParser('Usage: %prog [options] file.cj',version=VERSION)
     op.add_option('-e','--eval',metavar='CODE',help='Run CODE with plumbum')
     op.add_option('-c','--compile',metavar='FILE',help='Compile to FILE')
+    op.add_option('-p','--python',metavar='FILE',help='Translate to python')
     op.add_option('-d','--debug', action='store_true', default=False,
                   help='Turn debug flags on')
     (options, args) = op.parse_args()
@@ -26,6 +27,11 @@ if __name__ == '__main__':
         plumbum = Program(stdlib)
         plumbum.parse_file(argv[3])
         plumbum.save_compiled(argv[2])
+    elif options.python:
+        assert len(args) == 1, 'Need exactly 1 source file to translate'
+        plumbum = Program(stdlib)
+        plumbum.parse_file(argv[3])
+        plumbum.save_as_python(argv[2])
     elif len(args) == 0:
         from repl import Repl
         debugstr = ' (debug)' if options.debug else ''

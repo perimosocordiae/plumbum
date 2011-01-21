@@ -40,10 +40,19 @@ class Program:
                 self.tree.body[0].lineno = num+1
 
     def save_compiled(self,fname):
+        self.optimize()
         ast.fix_missing_locations(self.tree)
         self.code = compile(self.tree,self.fname,'exec')
         with open(fname,'wb') as f:
             dump(self.code,f)
+
+    def save_as_python(self,fname):
+        self.optimize()
+        self.tree.body.insert(0,ast.parse('from stdlib import *').body[0])
+        f = open(fname,'w') if fname != '-' else sys.stdout
+        print(unparse(self.tree), file=f)
+        if f != sys.stdout: f.close()
+        del self.tree.body[0]
 
     def load_compiled(self,fname):
         with open(fname,'rb') as f:
@@ -61,7 +70,6 @@ class Program:
         if hasattr(self,'code'):
             return exec(self.code)
         ast.fix_missing_locations(self.tree)
-        #print(unparse(self.tree)) # super useful for debugging
         exec(compile(self.tree,self.fname,'exec'),globals(),globals())
 
 class REPLProgram(Program):
