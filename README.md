@@ -1,4 +1,3 @@
-
 # Plumbum #
 
 An experimental, pipe-oriented programming language, designed to fill the
@@ -41,4 +40,4 @@ Some 'real' code examples:
 	# slurp from standard in
     <> | foo | print
 
-For more examples, see the files in the `test` directory.
+For more examples, see the files in the `test` directory or [this presentation](https://docs.google.com/present/edit?id=0AZnyju28KE7IZGNzNmNua3ZfMTMwZGs1MzhyYzc&hl=en&authkey=CJHUzNAD).
