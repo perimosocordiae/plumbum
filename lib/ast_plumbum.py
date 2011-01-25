@@ -40,14 +40,14 @@ class Program:
                 self.tree.body[0].lineno = num+1
 
     def save_compiled(self,fname):
-        self.optimize()
+        #self.optimize()
         ast.fix_missing_locations(self.tree)
         self.code = compile(self.tree,self.fname,'exec')
         with open(fname,'wb') as f:
             dump(self.code,f)
 
     def save_as_python(self,fname):
-        self.optimize()
+        #self.optimize()
         self.tree.body.insert(0,ast.parse('from stdlib import *').body[0])
         f = open(fname,'w') if fname != '-' else sys.stdout
         print(unparse(self.tree), file=f)
@@ -76,8 +76,8 @@ class REPLProgram(Program):
     def run(self, debug=False):
         if debug:
             print(unparse(self.tree).strip())
-            self.optimize() #maybe not for the repl... later
-            print(unparse(self.tree).strip())
+            #self.optimize() #maybe not for the repl... later
+            #print(unparse(self.tree).strip())
         result = None
         try: # ugly, but it makes sure we clear out self.tree.body
             for stmt in self.tree.body:

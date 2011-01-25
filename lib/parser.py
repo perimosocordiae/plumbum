@@ -30,7 +30,7 @@ def Statement(sides):
     s.col_offset = 0
     return s
 
-def Expression(pipe): 
+def Expression(pipe):
     return ast_ctor('lambda initial: 1', body=fold_ast(pipe))
 
 def fold_ast(pipe):
@@ -41,7 +41,7 @@ class Atom: pass
 
 class Inline(Atom):
     def __init__(self,expr):
-        #TODO: there's a subtle bug here: 
+        #TODO: there's a subtle bug here:
         # expr.body has a free variable 'initial'.
         # Usually, it won't cause trouble, but it's technically not correct.
         self.atom = expr.body
@@ -76,7 +76,7 @@ class Function(Atom):
 
 class Slurp(Function):
     def __init__(self,fname):
-        self.atom = ast_select("stdlib['_slurp_']('%s')" % fname)
+        self.atom = ast_select(stdlib['_slurp_']+"('%s')" % fname)
         self.type = 'strseq'
 
     def fold_ast(self, upstream):
@@ -86,7 +86,7 @@ class Slurp(Function):
 
 class Shell(Function):
     def __init__(self,cmd):
-        self.atom = ast_select("stdlib['_shell_']('%s')" % cmd)
+        self.atom = ast_select(stdlib['_shell_']+"('%s')" % cmd)
         self.type = 'strseq'
 
     def fold_ast(self, upstream):
@@ -95,7 +95,7 @@ class Shell(Function):
         return self.atom
 
 class Literal(Atom):
-    def fold_ast(self, upstream): 
+    def fold_ast(self, upstream):
         if upstream:
             raise Exception("Can't pass things into a Literal")
         return self.atom
@@ -119,7 +119,7 @@ class Integer(Literal):
         self.val = self.atom.n
 
 class BoundedRange(Literal):
-    def __init__(self,args): 
+    def __init__(self,args):
         start = args[0]
         second = args[1] if len(args) > 2 else None
         step = Integer(second.val - start.val) if second else Integer(1)
@@ -160,7 +160,7 @@ def generate_grammar(): # entirely for decluttering the global namespace
     regex = parser(QuotedString('/'),Regex)
     integer = parser(Word('-123456789',nums),Integer)
     literal = Forward()
-    brange = (LSQUARE + integer + Optional(Suppress(',') + integer) + 
+    brange = (LSQUARE + integer + Optional(Suppress(',') + integer) +
                 Suppress('..') + integer + RSQUARE)
     irange = LSQUARE + integer + Optional(Suppress(',') + integer) + Suppress('..]')
     listlit = LSQUARE + Optional(delimitedList(literal)) + RSQUARE
@@ -170,7 +170,7 @@ def generate_grammar(): # entirely for decluttering the global namespace
     listlit.setParseAction(lambda t: ListLit(t))
     string = parser(quotedString,String)
     literal << (string | regex | integer | listlit | brange | irange)
-    identifier = Word(alphas, alphanums)
+    identifier = Word(alphas, alphanums+'_')
     atom = Forward()
     function = parser(Group(identifier + ZeroOrMore(atom)),Function)
     atom << (slurp | shell | inline | literal | function)

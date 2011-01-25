@@ -47,19 +47,8 @@ def flatten(seq,*args):
         else:
             yield x
 
-def grep(seq,regex,*extra):
-    assert len(extra) == 0
-    if not hasattr(regex,'search'):
-        regex = re.compile(regex)
-    return (x for x in seq if regex.search(x))
-
-def sub(seq,*args):
-    assert len(args) > 1 
-    regex = re.compile(args[0])
-    return (regex.sub(args[1],x) for x in seq)
-
 def split(seq,*args):
-    regex = re.compile("\s") if len(args)==0 else re.compile(args[0])
+    regex = args[0] if args else re.compile("\s")
     return (regex.split(x) for x in seq)
 
 def seq_select(seq,*args):
@@ -78,11 +67,6 @@ def lazy_uniq(seq,*_):
             yield x
             last = x
 
-def pb_map(seq,*args):
-    assert len(args) == 1, "can only map single fns, for now"
-    assert args[0] in stdlib, "can only map stdlib fns, for now."
-    return (map(stdlib[args[0]],x) for x in seq)
-
 def join(seq,*args):
     sep = args[0]
     seq1,seq2 = tee(seq) # just in case
@@ -97,15 +81,16 @@ def join(seq,*args):
 
 stdlib = {
     # lazy
-    '_slurp_': slurp,
-    '_shell_': shellexec,
-    'grep': grep,'sub': sub,'split': split,
-    'flatten': flatten,
-    'select': seq_select,
-    'luniq': lazy_uniq,
-    'map': pb_map,
-    'join': join,
+    '_slurp_': 'slurp',
+    '_shell_': 'shellexec',
+    'split': 'split',
+    'flatten': 'flatten',
+    'select': 'seq_select',
+    'luniq': 'lazy_uniq',
+    'join': 'join',
     # inlines
+    'sub':     'lambda seq,regex,repl,*_: (regex.sub(repl,x) for x in seq)',
+    'grep':    'lambda seq,regex,*_: (x for x in seq if regex.search(x))',
     'inc':     'lambda seq: (int(x)+1 for x in seq)',
     'ord':     'lambda seq: map(ord,seq)',
     'chr':     'lambda seq: map(chr,seq)',
@@ -115,10 +100,11 @@ stdlib = {
     'strip':   'lambda seq: (x.strip() for x in seq)',
     'compact': 'lambda seq: (x for x in seq if x)',
     # non-lazy
-    'print': pb_print,
-    'println': pb_println,
+    'print': 'pb_print',
+    'println': 'pb_println',
     # inlines
     'sort':  'sorted',
+    
     'uniq':  'set',
     'sum':   'sum',
     'count': 'lambda seq: sum(1 for _ in seq)',

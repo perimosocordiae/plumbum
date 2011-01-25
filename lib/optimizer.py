@@ -2,6 +2,7 @@
 import ast
 from collections import Counter
 
+#TODO: bug when optimizing inlined 'sub' (seq + 2 args)
 class Optimizer(ast.NodeTransformer):
     def __init__(self):
         self.redo = False
