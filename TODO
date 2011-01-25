@@ -7,6 +7,11 @@ compile-time optimizations
  - should be easier with a real (python!) AST
  - add type annotations
 
+type-aware pipeline functions
+pipe-aware pipeline functions
+ - that is, 'sort | tail 1' should condense to 'max'
+ - related "Stream Fusion" and "deforestation"
+
 even more test cases!
 scan/split
 'prelude'-style stdlib in Plumbum

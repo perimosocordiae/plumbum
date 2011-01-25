@@ -1,6 +1,6 @@
 
 import re,sys,_ast
-from ast import parse as ast_parse
+from ast import parse as ast_parse, dump as ast_dump
 from pyparsing import *
 from stdlib import stdlib # for inlining purposes
 
@@ -30,70 +30,117 @@ def Statement(sides):
     s.col_offset = 0
     return s
 
- # woo recursion! TODO: rewrite as a fold
-DUMMY = 0xdead
-def fold_ast(rpipe):
-    atom = rpipe[-1]
-    if type(atom) is _ast.Call:
-        if len(rpipe) > 1:
-            atom.args[0] = fold_ast(rpipe[:-1])
-        elif atom.args[0] == DUMMY:
-            atom.args[0] = ast_select('initial')
-        return atom
-    if len(rpipe) > 1:
-        if type(atom) is _ast.Name:
-            a = atom.id
-            raise Exception("Invalid name: '%s'. Did you mean '$%s'?"%(a,a))
-        raise Exception('Invalid location for literal: %s'%atom)
-    return atom
-
 def Expression(pipe): 
     return ast_ctor('lambda initial: 1', body=fold_ast(pipe))
 
-def Function(atom):
-    cmd, args = atom[0], atom[1:]
-    if cmd not in stdlib: # hope it's a user-defined!
-        return ast_ctor(cmd+'()', args=[DUMMY])
-    func = stdlib[cmd]
-    if type(func) is str: # inlines
-        value = ast_ctor('(%s)()' % func, args=[DUMMY])
-    else:
-        value = ast_ctor('stdlib["%s"]()' % cmd, args=[DUMMY])
-    value.args.extend(args)
-    return value
+def fold_ast(pipe):
+    init,*rest = reversed(pipe)
+    return init.fold_ast(rest)
 
-def Regex(patt):
-    return ast_select("re.compile(r'%s')" % patt)
+class Atom: pass
 
-def String(s):
-    return ast_select(s)
+class Inline(Atom):
+    def __init__(self,expr):
+        #TODO: there's a subtle bug here: 
+        # expr.body has a free variable 'initial'.
+        # Usually, it won't cause trouble, but it's technically not correct.
+        self.atom = expr.body
 
-def Range(args): #TODO: bug! ranges of form [1,4..] are interpreted [1..4]
-    start = args[0]
-    second = args[1] if len(args) > 2 else None
-    last = args[-1] if len(args) > 1 else None
-    step = Integer(second.n - start.n) if second else Integer(1)
-    if last:
-        last = Integer(last.n + (1 if step.n > 0 else -1)) # make it inclusive
-        return ast_ctor("range()", args=[start, last, step])
-    return ast_ctor("count()", args=[start, step])
+DUMMY = 0xdead # value doesn't really matter
+class Function(Atom):
+    def __init__(self, cmd_args):
+        cmd,*args = cmd_args
+        if cmd not in stdlib: # hope it's a user-defined!
+            #TODO: actually store these, w/ tags
+            self.atom = ast_ctor(cmd+'()', args=[DUMMY])
+        else:
+            func = stdlib[cmd]
+            if type(func) is str: # inlines
+                self.atom = ast_ctor('(%s)()' % func, args=[DUMMY])
+            else:
+                self.atom = ast_ctor('stdlib["%s"]()' % cmd, args=[DUMMY])
+        self.atom.args.extend(x.atom for x in args)
 
-def List(lst):
-    return _ast.List(elts=list(lst), ctx=_ast.Load())
+    def fold_ast(self, upstream):
+        if upstream:
+            a,*rest = upstream
+            self.check_type(a)
+            self.atom.args[0] = a.fold_ast(rest)
+        else:
+            self.atom.args[0] = ast_select('initial')
+        return self.atom
 
-def Integer(i):
-    return _ast.Num(n=int(i))
+    def check_type(self, param):
+        #TODO: use tags
+        pass
 
-def Inline(expr):
-    #TODO: there's a subtle bug here: expr.body has a free variable 'initial'
-    #       usually, it won't cause trouble, but it's technically not correct.
-    return expr.body
+class Slurp(Function):
+    def __init__(self,fname):
+        self.atom = ast_select("stdlib['_slurp_']('%s')" % fname)
+        self.type = 'strseq'
 
-def Slurp(fname):
-    return ast_select("stdlib['_slurp_']('%s')" % fname)
+    def fold_ast(self, upstream):
+        if upstream:
+            raise Exception("Can't pass things into a slurp (yet)")
+        return self.atom
 
-def Shell(cmd):
-    return ast_select("stdlib['_shell_']('%s')" % cmd)
+class Shell(Function):
+    def __init__(self,cmd):
+        self.atom = ast_select("stdlib['_shell_']('%s')" % cmd)
+        self.type = 'strseq'
+
+    def fold_ast(self, upstream):
+        if upstream:
+            raise Exception("Can't pass things into a shell command (yet)")
+        return self.atom
+
+class Literal(Atom):
+    def fold_ast(self, upstream): 
+        if upstream:
+            raise Exception("Can't pass things into a Literal")
+        return self.atom
+
+class Regex(Literal):
+    def __init__(self,patt):
+        self.atom = ast_select("re.compile(r'%s')" % patt)
+        self.type = 'regex'
+        self.val = patt
+
+class String(Literal):
+    def __init__(self,s):
+        self.atom = ast_select(s)
+        self.type = 'str'
+        self.val = s
+
+class Integer(Literal):
+    def __init__(self,i):
+        self.atom = _ast.Num(n=int(i))
+        self.type = 'int'
+        self.val = self.atom.n
+
+class BoundedRange(Literal):
+    def __init__(self,args): 
+        start = args[0]
+        second = args[1] if len(args) > 2 else None
+        step = Integer(second.val - start.val) if second else Integer(1)
+        # inclusive ranges
+        last = Integer(args[-1].val + (1 if step.val > 0 else -1))
+        self.atom = ast_ctor("range()", args=[start.atom, last.atom, step.atom])
+        self.type = 'intseq'
+
+class InfRange(Literal):
+    def __init__(self,args):
+        start = args[0]
+        second = args[1] if len(args) > 1 else None
+        step = Integer(second.val - start.val) if second else Integer(1)
+        self.atom = ast_ctor("count()", args=[start.atom, step.atom])
+        self.type = 'intseq'
+
+class ListLit(Literal):
+    def __init__(self,lst):
+        self.atom = _ast.List(elts=[x.atom for x in lst], ctx=_ast.Load())
+        self.type = lst[0].type # assume homogenous
+ #end
 
 
 ###########
@@ -113,13 +160,16 @@ def generate_grammar(): # entirely for decluttering the global namespace
     regex = parser(QuotedString('/'),Regex)
     integer = parser(Word('-123456789',nums),Integer)
     literal = Forward()
-    rangelit = (LSQUARE + integer + Optional(Suppress(',') + integer) + 
-                Suppress('..') + Optional(integer) + RSQUARE)
-    rangelit.setParseAction(Range)
+    brange = (LSQUARE + integer + Optional(Suppress(',') + integer) + 
+                Suppress('..') + integer + RSQUARE)
+    irange = LSQUARE + integer + Optional(Suppress(',') + integer) + Suppress('..]')
     listlit = LSQUARE + Optional(delimitedList(literal)) + RSQUARE
-    listlit.setParseAction(List)
+    # Not sure why, but PyParsing barfs unless I wrap the ctors in lambdas
+    brange.setParseAction(lambda t: BoundedRange(t))
+    irange.setParseAction(lambda t: InfRange(t))
+    listlit.setParseAction(lambda t: ListLit(t))
     string = parser(quotedString,String)
-    literal << (string | regex | integer | listlit | rangelit)
+    literal << (string | regex | integer | listlit | brange | irange)
     identifier = Word(alphas, alphanums)
     atom = Forward()
     function = parser(Group(identifier + ZeroOrMore(atom)),Function)
