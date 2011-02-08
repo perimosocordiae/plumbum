@@ -31,11 +31,8 @@ def Statement(sides):
     return s
 
 def Expression(pipe):
-    return ast_ctor('lambda initial: 1', body=fold_ast(pipe))
-
-def fold_ast(pipe):
     init,*rest = reversed(pipe)
-    return init.fold_ast(rest)
+    return ast_ctor('lambda initial: 1', body=init.fold_ast(rest))
 
 class Atom: pass
 

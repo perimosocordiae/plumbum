@@ -2,7 +2,7 @@
 import cmd,imp
 from glob import glob
 from itertools import chain
-from ast_plumbum import REPLProgram
+from program import REPLProgram
 from traceback import print_exc
 from stdlib import stdlib
 

@@ -5,7 +5,7 @@ VERSION = '0.7'
 from sys import argv,exit,exc_info
 from itertools import chain
 from optparse import OptionParser
-from ast_plumbum import Program
+from program import Program
 from stdlib import stdlib
 
 if __name__ == '__main__':
