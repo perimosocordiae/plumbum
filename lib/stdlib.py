@@ -5,6 +5,7 @@ from urllib.request import urlopen
 from itertools import islice,chain,tee,count,repeat
 from subprocess import Popen,PIPE
 from select import select
+from random import random
 
 def slurp(fname=''):
     if len(fname) == 0:
@@ -52,11 +53,10 @@ def split(seq,*args):
     return (regex.split(x) for x in seq)
 
 def seq_select(seq,*args):
-    assert len(args) > 0, "Must provide at least one 0-based index"
-    inds = list(map(int,args))
+    assert len(args) > 0, "Must provide at least one 1-based index"
+    inds = list(int(x)-1 for x in args)
     if len(inds) > 1:
-        grab = lambda row: [row[i] for i in inds]
-        return map(grab,seq)
+        return ([row[i] for i in inds] for row in seq)
     # special case to avoid unnecessary nesting
     return (row[inds[0]] for row in seq)
 
@@ -94,9 +94,11 @@ stdlib = {
     'inc':     'lambda seq: (int(x)+1 for x in seq)',
     'ord':     'lambda seq: map(ord,seq)',
     'chr':     'lambda seq: map(chr,seq)',
+    'rand':    'lambda seq: (random() for _ in seq)',
+    'flip':    'lambda seq: (list(reversed(row)) for row in seq)',
     'zip':     'zip',
     'repeat':  'lambda _, arg: repeat(arg)',
-    'head':    'lambda seq,*args: islice(seq,*map(int,args))',
+    'take':    'lambda seq,*args: islice(seq,*map(int,args))',
     'strip':   'lambda seq: (x.strip() for x in seq)',
     'compact': 'lambda seq: (x for x in seq if x)',
     # non-lazy
@@ -104,7 +106,7 @@ stdlib = {
     'println': 'pb_println',
     # inlines
     'sort':  'sorted',
-    
+    'reverse': 'reversed',
     'uniq':  'set',
     'sum':   'sum',
     'count': 'lambda seq: sum(1 for _ in seq)',

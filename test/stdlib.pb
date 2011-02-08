@@ -10,11 +10,11 @@ lexsort = ord | sort | chr
 
 <stdlib.pb> | strip | compact | grep /[aeiou]{2}/ | sort | count
 
-`yes` | strip | head 10| uniq
+`yes` | strip | take 10 | uniq
 
 [[2,32],3,2,[3,[[3]]]] | flatten |sum
 
-[1..] | zip `yes` | flatten | head 10
+[1..] | zip `yes` | flatten | take 10
 
 `yes` | zip { [8,7..3] | inc } | count
 
