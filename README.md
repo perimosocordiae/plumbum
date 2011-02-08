@@ -5,17 +5,21 @@ gap between classic Unix shell one-liners and powerful general-purpose
 programming languages.
 
 ## Dependencies ##
- * Some flavor of Linux
-   * definitely works on recent Ubuntus
  * Python 3.x
- * PyParsing
+ * PyParsing 1.5.5+
+ * Some flavor of Linux
+
+On a recent Ubuntu machine, running `./install.sh` should take care of
+everything for you.
 
 ## Usage ##
- * Start up a REPL: `./pb`
- * Eval one line: `./pb -e '"hello world" | println'`
- * Run a program: `./pb foo.pb`
- * Compile a program: `./pb -c foo.pbc foo.pb`
- * Run a compiled program: `./pb foo.pbc`
+<table>
+<tr><td>Start up a REPL</td><td><pre>./pb</pre></td></tr>
+<tr><td>Eval one line</td><td><pre>./pb -e '"hello world" | println'</pre></td></tr>
+<tr><td>Run a program</td><td><pre>./pb foo.pb</pre></td></tr>
+<tr><td>Compile a program</td><td><pre>./pb -c foo.pbc foo.pb</pre></td></tr>
+<tr><td>Run a compiled program</td><td><pre>./pb foo.pbc</pre></td></tr>
+</table>
 
 ## Code Examples ##
 Some 'real' code examples:
@@ -33,7 +37,7 @@ Some 'real' code examples:
     <foo.txt> | grep /bar/ | print
 
     # inline (lazy!) shell commands
-    `yes` | strip | head 10 | println ","
+    `yes` | strip | take 10 | println ","
 
     # name a pipeline, use it later
     foo = uniq | sort
@@ -41,3 +45,4 @@ Some 'real' code examples:
     <> | foo | print
 
 For more examples, see the files in the `test` directory or [this presentation](https://docs.google.com/present/edit?id=0AZnyju28KE7IZGNzNmNua3ZfMTMwZGs1MzhyYzc&hl=en&authkey=CJHUzNAD).
+
