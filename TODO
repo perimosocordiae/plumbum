@@ -1,17 +1,10 @@
 
-rewrite builtins as AST nodes
- - avoid all the hash lookups at runtime
- - allow agressive streamlining / static checking
-
-compile-time optimizations
- - should be easier with a real (python!) AST
- - add type annotations
-
-type-aware pipeline functions
-pipe-aware pipeline functions
- - that is, 'sort | tail 1' should condense to 'max'
- - related "Stream Fusion" and "deforestation"
+smarter compile-time optimization
+ - function annotations
+ - types
+ - streamlining
+    - that is, 'sort | tail 1' should condense to 'max'
+    - related to "Stream Fusion" and "deforestation"
 
 even more test cases!
 scan/split
-'prelude'-style stdlib in Plumbum
