@@ -35,22 +35,23 @@ method atom($/){
 	make ($<slurp> // $<shell> // $<listliteral> // $<fcall>).ast;
 }
 
-#TODO: all these three
 method slurp($/){ 
-	my $contents = $<quote_EXPR>.ast;
+	my $contents := $<quote_EXPR>.ast;
 	make PAST::Op.new( $contents, :pasttype('call'), :name('slurp'), :node($/));
 }
 method shell($/){
-	my $contents = $<quote_EXPR>.ast;
+	my $contents := $<quote_EXPR>.ast;
 	make PAST::Op.new( $contents, :pasttype('call'), :name('shell'), :node($/));
 }
 method listliteral($/){
-	my $past := PAST:Val.new(:node($/), :returns('list'));
-	for $<EXPR> { $past.push( $_.ast ); }
-	make $past;
+	my @lst := ();
+	for $<EXPR> { @lst.push( $_.ast ); }
+	make PAST::Val.new(:node($/), :value(@lst));
 }
 method fcall($/){
-	my $past = PAST::Op.new( $<identifier>.ast, :pasttype('call'), :???? #TODO
+	my $fn := $<identifier>.ast;
+	my $past := PAST::Op.new( :pasttype('call'), :node($/), :name($fn) );
+	for $<EXPR> { $past.push( $_.ast ); }
 }
 
 ## terms
