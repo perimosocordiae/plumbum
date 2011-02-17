@@ -35,11 +35,12 @@ token identifier { <ident> }
 
 rule p_expr { [ <atom> ] ** "|" }
 
-rule atom { <slurp> | <shell> | <listliteral> | <fcall> }
+rule atom { <slurp> | <shell> | <listliteral> | <string> | <fcall> }
 
-#TODO: ranges
+#TODO: ranges, regexen
 #TODO: don't use EXPR, it's too general
 rule listliteral { '[' [ <EXPR> ] ** "," ']' }
+rule string { <quote> }
 
 token slurp { <?[<>]> <quote_EXPR: ':qq'> }
 token shell { <?[`]> <quote_EXPR: ':qq'> }

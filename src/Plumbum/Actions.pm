@@ -32,7 +32,7 @@ method p_expr($/){
 }
 
 method atom($/){
-	make ($<slurp> // $<shell> // $<listliteral> // $<fcall>).ast;
+	make ($<slurp> // $<shell> // $<listliteral> // $<string> // $<fcall>).ast;
 }
 
 method slurp($/){ 
@@ -47,6 +47,9 @@ method listliteral($/){
 	my @lst := ();
 	for $<EXPR> { @lst.push( $_.ast ); }
 	make PAST::Val.new(:node($/), :value(@lst));
+}
+method string($/){
+	make $<quote>.ast;
 }
 method fcall($/){
 	my $fn := $<identifier>.ast;
