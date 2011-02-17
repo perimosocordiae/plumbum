@@ -21,19 +21,29 @@ token ws {
 
 ## Statements
 
-rule statementlist { [ <statement> | <?> ] ** ';' }
+rule statementlist { [ <statement> ] ** "\n" }
 
-rule statement {
-    | <statement_control>
-    | <EXPR>
+rule statement { <assignment> | <p_expr> }
+
+rule assignment {
+	<identifier> '=' <p_expr>
 }
 
-proto token statement_control { <...> }
-rule statement_control:sym<say>   { <sym> [ <EXPR> ] ** ','  }
-rule statement_control:sym<print> { <sym> [ <EXPR> ] ** ','  }
+token identifier { <ident> }
+
+## pipe expressions
+
+rule p_expr { [ <atom> ] ** "|" }
+
+rule atom { <slurp> | <shell> | <fcall> }
+
+token slurp { '<>' } #<?[<>]> <quote_EXPR: ':qq'> }
+token shell { '``' } #<?[`]> <quote_EXPR: ':qq'> }
+rule fcall { <identifier> [ <EXPR> ] ** <ws> }
 
 ## Terms
 
+token term:sym<identifier> { <identifier> }
 token term:sym<integer> { <integer> }
 token term:sym<quote> { <quote> }
 
