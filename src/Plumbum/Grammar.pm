@@ -35,11 +35,15 @@ token identifier { <ident> }
 
 rule p_expr { [ <atom> ] ** "|" }
 
-rule atom { <slurp> | <shell> | <fcall> }
+rule atom { <slurp> | <shell> | <listliteral> | <fcall> }
 
-token slurp { '<>' } #<?[<>]> <quote_EXPR: ':qq'> }
-token shell { '``' } #<?[`]> <quote_EXPR: ':qq'> }
-rule fcall { <identifier> [ <EXPR> ] ** <ws> }
+#TODO: ranges
+#TODO: don't use EXPR, it's too general
+rule listliteral { '[' [ <EXPR> ] ** "," ']' }
+
+token slurp { <?[<>]> <quote_EXPR: ':qq'> }
+token shell { <?[`]> <quote_EXPR: ':qq'> }
+rule fcall { <identifier> [[ <EXPR> ] ** \s+]* }
 
 ## Terms
 

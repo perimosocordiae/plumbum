@@ -11,8 +11,6 @@ method statementlist($/) {
 }
 
 method statement($/) {
-	#my $stmt := $<assignment> ?? $<assignment> !! $<p_expr>;
-	#make $stmt.ast;
 	make ($<assignment> // $<p_expr>).ast;
 }
 
@@ -34,13 +32,26 @@ method p_expr($/){
 }
 
 method atom($/){
-	make ($<slurp> // $<shell> // $<fcall>).ast;
+	make ($<slurp> // $<shell> // $<listliteral> // $<fcall>).ast;
 }
 
 #TODO: all these three
-method slurp($/){ }
-method shell($/){ }
-method fcall($/){ }
+method slurp($/){ 
+	my $contents = $<quote_EXPR>.ast;
+	make PAST::Op.new( $contents, :pasttype('call'), :name('slurp'), :node($/));
+}
+method shell($/){
+	my $contents = $<quote_EXPR>.ast;
+	make PAST::Op.new( $contents, :pasttype('call'), :name('shell'), :node($/));
+}
+method listliteral($/){
+	my $past := PAST:Val.new(:node($/), :returns('list'));
+	for $<EXPR> { $past.push( $_.ast ); }
+	make $past;
+}
+method fcall($/){
+	my $past = PAST::Op.new( $<identifier>.ast, :pasttype('call'), :???? #TODO
+}
 
 ## terms
 
