@@ -25,10 +25,14 @@ method identifier($/){
 	make PAST::Var.new(:name(~$/), :scope('package'), :node($/));
 }
 
+#TODO: consider rewriting as:
+# p_expr = <atom> | '|' <p_expr>
+#  and use the AST to accumulate things for us
 method p_expr($/){
-	my $past := PAST::Op.new( :node($/), :name('pipe'), :pasttype('call') );
-	for $<atom> { $past.unshift( $_.ast ); }
-	make $past;
+	my @pipe := ();
+	for $<atom> { @pipe.unshift( $_.ast ); }
+	#TODO: this causes trouble, as @pipe isn't an ast node
+	make PAST::Op.new( @pipe, :node($/), :name('pipe'), :pasttype('call') );
 }
 
 method atom($/){
