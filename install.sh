@@ -26,7 +26,6 @@ if [ ! -f pb ]; then
 fi
 
 pushd test
-./compilation.sh
 ../pb stdlib.pb
 popd
 

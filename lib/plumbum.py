@@ -11,38 +11,22 @@ from stdlib import stdlib
 if __name__ == '__main__':
     op = OptionParser('Usage: %prog [options] file.cj',version=VERSION)
     op.add_option('-e','--eval',metavar='CODE',help='Run CODE with plumbum')
-    op.add_option('-c','--compile',metavar='FILE',help='Compile to FILE')
-    op.add_option('-p','--python',metavar='FILE',help='Translate to python')
     op.add_option('-d','--debug', action='store_true', default=False,
                   help='Turn debug flags on')
     (options, args) = op.parse_args()
-
+    
+    plumbum = Program()
     if options.eval:
         assert len(args) == 0, 'Additional args are meaningless with -e'
-        plumbum = Program(stdlib)
-        plumbum.parse_line(argv[2])
-        plumbum.run()
-    elif options.compile:
-        assert len(args) == 1, 'Need exactly 1 source file to compile'
-        plumbum = Program(stdlib)
-        plumbum.parse_file(argv[3])
-        plumbum.save_compiled(argv[2])
-    elif options.python:
-        assert len(args) == 1, 'Need exactly 1 source file to translate'
-        plumbum = Program(stdlib)
-        plumbum.parse_file(argv[3])
-        plumbum.save_as_python(argv[2])
+        plumbum.eval_line(argv[2])
     elif len(args) == 0:
         from repl import Repl
         debugstr = ' (debug)' if options.debug else ''
         welcome = 'Welcome to Plumbum v%s%s'%(VERSION,debugstr)
-        try: Repl(options.debug).cmdloop(welcome)
+        try: Repl(plumbum,options.debug).cmdloop(welcome)
         except KeyboardInterrupt: print() # move past the prompt
     elif len(args) > 1:
         op.error('Only one source file at a time')
-    else: #TODO: maybe use a flag to specify, or look at filename
-        plumbum = Program(stdlib)
-        try: plumbum.parse_file(args[0])
-        except: plumbum.load_compiled(args[0])
-        plumbum.run()
+    else:
+        plumbum.eval_file(args[0])
 

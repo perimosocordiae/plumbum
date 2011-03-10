@@ -17,8 +17,6 @@ everything for you.
 <tr><td>Start up a REPL</td><td><pre>./pb</pre></td></tr>
 <tr><td>Eval one line</td><td><pre>./pb -e '"hello world" | println'</pre></td></tr>
 <tr><td>Run a program</td><td><pre>./pb foo.pb</pre></td></tr>
-<tr><td>Compile a program</td><td><pre>./pb -c foo.pbc foo.pb</pre></td></tr>
-<tr><td>Run a compiled program</td><td><pre>./pb foo.pbc</pre></td></tr>
 </table>
 
 ## Code Examples ##

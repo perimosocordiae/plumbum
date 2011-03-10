@@ -1,24 +1,24 @@
 
-import cmd,imp
+import cmd
 from glob import glob
-from itertools import chain
-from program import REPLProgram
-from traceback import print_exc
 from stdlib import stdlib
 
 class Repl(cmd.Cmd):
-    def __init__(self,debug=False):
+    def __init__(self,plumbum,debug=False):
         super().__init__()
-        self.plumbum = REPLProgram(stdlib)
+        self.plumbum = plumbum
         self.debug = debug
         self.prompt = '>> '
         if not debug: # use a terser exception printer
-            print_exc = lambda: print(exc_info()[0:2],sep=': ')
+            from sys import exc_info
+            self.print_exc = lambda: print(*(exc_info()[0:2]),sep=': ')
+        else:
+            from traceback import print_exc
+            self.print_exc = print_exc
 
     def do_run(self,line):
         'Run a Plumbum source file'
-        self.plumbum.parse_file(line.strip())
-        self.plumbum.run(self.debug)
+        self.plumbum.eval_file(line.strip())
 
     def complete_run(self,text,line,beg,end):
         return glob(text+'*')
@@ -29,20 +29,15 @@ class Repl(cmd.Cmd):
 
     def default(self,line):
         try:
-            self.plumbum.parse_line(line)
-        except:
-            print("Error parsing:",line)
-            print_exc()
-            return
-        try:
-            res = self.plumbum.run(self.debug)
+            res = self.plumbum.eval_line(line)
             if not res: return
             if hasattr(res,'__iter__'): print(list(res))
             else: print(res)
-        except KeyboardInterrupt: pass # keep the interpreter going
+        except KeyboardInterrupt:
+            return # keep the interpreter going
         except:
-            print("Error running:",line)
-            print_exc()
+            print("Error evaluating:",line)
+            self.print_exc()
 
     def completedefault(self,text,line,beg,end):
         lch,rch = line.rfind('<'),line.rfind('>')

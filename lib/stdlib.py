@@ -67,8 +67,7 @@ def lazy_uniq(seq,*_):
             yield x
             last = x
 
-def join(seq,*args):
-    sep = args[0]
+def join(seq,sep):
     seq1,seq2 = tee(seq) # just in case
     try:
         for x in seq1:
@@ -79,36 +78,49 @@ def join(seq,*args):
         else:
             raise e
 
+def pb_apply(seq, depth, func):
+    # this makes me cry.
+    for x in seq:
+        if depth == 0: yield func(x)
+        else:
+            for y in x:
+                if depth == 1: yield func(y)
+                else:
+                    for z in y:
+                        if depth == 2: yield func(z)
+                        else:
+                            raise ValueError("Depths >2 NYI!")
+
+
 stdlib = {
     # lazy
-    '_slurp_': 'slurp',
-    '_shell_': 'shellexec',
-    'split': 'split',
-    'flatten': 'flatten',
-    'select': 'seq_select',
-    'luniq': 'lazy_uniq',
-    'join': 'join',
-    # inlines
-    'sub':     'lambda seq,regex,repl,*_: (regex.sub(repl,x) for x in seq)',
-    'grep':    'lambda seq,regex,*_: (x for x in seq if regex.search(x))',
-    'inc':     'lambda seq: (int(x)+1 for x in seq)',
-    'ord':     'lambda seq: map(ord,seq)',
-    'chr':     'lambda seq: map(chr,seq)',
-    'rand':    'lambda seq: (random() for _ in seq)',
-    'flip':    'lambda seq: (list(reversed(row)) for row in seq)',
-    'zip':     'zip',
-    'repeat':  'lambda _, arg: repeat(arg)',
-    'take':    'lambda seq,*args: islice(seq,*map(int,args))',
-    'strip':   'lambda seq: (x.strip() for x in seq)',
-    'compact': 'lambda seq: (x for x in seq if x)',
+    '_slurp_': slurp,
+    '_shell_': shellexec,
+    'split':   split,
+    'flatten': flatten,
+    'select':  seq_select,
+    'luniq':   lazy_uniq,
+    'join':    join,
+    #'apply':  pb_apply,  #TODO: I'm not sure the current system will allow
+                          #     something like this. It should, though.
+    'sub':     lambda seq,regex,repl,*_: (regex.sub(repl,x) for x in seq),
+    'grep':    lambda seq,regex,*_: (x for x in seq if regex.search(x)),
+    'ord':     lambda seq: map(ord,seq),
+    'chr':     lambda seq: map(chr,seq),
+    'rand':    lambda seq: (random() for _ in seq),
+    'flip':    lambda seq: (list(reversed(row)) for row in seq),
+    'zip':     zip,
+    'repeat':  lambda _, arg: repeat(arg),
+    'take':    lambda seq,*args: islice(seq,*map(int,args)),
+    'strip':   lambda seq: (x.strip() for x in seq),
+    'compact': lambda seq: (x for x in seq if x),
     # non-lazy
-    'print': 'pb_print',
-    'println': 'pb_println',
-    # inlines
-    'sort':  'sorted',
-    'reverse': 'reversed',
-    'uniq':  'set',
-    'sum':   'sum',
-    'count': 'lambda seq: sum(1 for _ in seq)',
+    'print':   pb_print,
+    'println': pb_println,
+    'sort':    sorted,
+    'reverse': reversed,
+    'uniq':    set,
+    'sum':     sum,
+    'count':   lambda seq: sum(1 for _ in seq),
     }
 

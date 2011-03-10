@@ -1,6 +1,6 @@
 
 # comments should be ignored
-[2,3,4,1,2,5,3,2] | sort | inc    # from '#' to eol
+[2,3,4,1,2,5,3,2] | sort | uniq    # from '#' to eol
 
 foo = strip | compact
 <stdlib.pb> | foo | grep /[aeiou]{2}/ | sort | count
@@ -16,6 +16,6 @@ lexsort = ord | sort | chr
 
 [1..] | zip `yes` | flatten | take 10
 
-`yes` | zip { [8,7..3] | inc } | count
+`yes` | zip { [8,7..3] | sort } | count
 
-"\n\nstdlib tests passed\n\n" | println
+['','',"stdlib tests passed",'',''] | print "\n"
