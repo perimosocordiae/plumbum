@@ -13,11 +13,11 @@ if [ $? == 1 ]; then
 	set -e
 	echo "Installing pyparsing"
 	PPDIR='pyparsing-1.5.5'
-	wget "http://cheeseshop.python.org/packages/source/p/pyparsing/$PPDIR.tar.gz"
+	curl "http://pypi.python.org/packages/source/p/pyparsing/$PPDIR.tar.gz" | tar -xzf -
 	pushd $PPDIR
 	sudo python3 setup.py install
 	popd
-	sudo rm -rf $PPDIR "$PPDIR.tar.gz"
+	sudo rm -rf $PPDIR
 fi
 
 set -e
