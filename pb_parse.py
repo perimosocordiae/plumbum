@@ -64,8 +64,9 @@ def __setup_parser():
   # functions and arguments
   identifier = Word(alphas, alphanums+'_')
   subpipe = Forward()
-  argument = parser(string | list_lit | regex | integer | subpipe | slurp | shell, extract_arg)
-  function = parser(Group(identifier + Group(ZeroOrMore(argument))), lambda x: tuple(x.asList()))
+  function = Forward()
+  argument = parser(string | list_lit | regex | integer | subpipe | slurp | shell | function, extract_arg)
+  function << parser(Group(identifier + Group(ZeroOrMore(argument))), lambda x: tuple(x.asList()))
 
   # an atom is anything that can fit between pipes on its own
   atom = (function | slurp | shell | list_lit)
