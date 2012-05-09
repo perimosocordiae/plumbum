@@ -1,4 +1,3 @@
-import re
 
 class UnitType(object):
   def __init__(self, type_name, depth=0):

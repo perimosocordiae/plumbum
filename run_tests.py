@@ -30,8 +30,8 @@ def assert_type(code, expected_type):
   pb = InteractivePB()
   for statement in parse_blob(code):
     pb.define(statement)
-  if statement.find('name'):
-    t = str(pb.pipes[statement.name].type)
+  if statement['name']:
+    t = str(pb.pipes[statement['name']].type)
   else:
     t = str(pb.pipes[''][0].type.output)
   assert t == expected_type, 'Expected type %s, got type %s' % (expected_type,t)

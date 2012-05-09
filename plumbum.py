@@ -1,7 +1,5 @@
 
 from copy import copy as shallowcopy
-import re
-from lxml.objectify import ObjectifiedElement
 from pb_pipe import *
 from pb_stdlib import stdlib
 
@@ -16,8 +14,8 @@ class Plumbum(object):
     self.pipes[''] = []  # '' pipes are entrypoints, may have > 1
   
   def define(self, statement):
-    name = str(statement.name.text) if statement.find('name') else ''
-    pipe = self.join_pipe(map(self.resolve,statement.pipe.iterchildren()))
+    name = statement['name']
+    pipe = self.join_pipe(map(self.resolve,statement['pipe']))
     if not name:
       assert pipe.type.input.name == 'nil', 'Pipe needs input of type %s' % pipe.type
       self.pipes[''].append(pipe)
@@ -30,42 +28,36 @@ class Plumbum(object):
       consume(main.func(None,main.args))
   
   def typeof(self, statement):
-    return self.join_pipe(map(self.resolve,statement.pipe.iterchildren())).type
+    return self.join_pipe(map(self.resolve,statement['pipe'])).type
 
   def resolve(self, atom):
     resolvers = {
-      'function': lambda atom: self._resolve_function(atom.name.text,atom.find('arguments')),
-      'slurp': lambda atom: self._resolve_function('slurp',(atom.text,)),
-      'shell': lambda atom: self._resolve_function('shell',(atom.text,)),
-      'emptylist': lambda atom: Literal([],'arb',1),
-      'irange': lambda atom: InfiniteRange([int(c.text) for c in atom.iterchildren()]),
-      'brange': lambda atom: BoundedRange([int(c.text) for c in atom.iterchildren()]),
-      'intlist': lambda atom: Literal([int(c.text) for c in atom.iterchildren()],'int',1),
-      'strlist': lambda atom: Literal([(c.text or '') for c in atom.iterchildren()],'str',1),
-      'rgxlist': lambda atom: Literal([re.compile(c.text) for c in atom.iterchildren()],'rgx',1),
+      'function': lambda val: self._resolve_function(val['name'],val['arguments']),
+      'emptylist': lambda val: Literal(val,'arb',1),
+      'irange': InfiniteRange,
+      'brange': BoundedRange,
+      'intlist': lambda val: Literal(val,'int',1),
+      'strlist': lambda val: Literal(val,'str',1),
+      'rgxlist': lambda val: Literal(val,'rgx',1),
       'lstlist': self._resolve_lstlist,
-      'ITEM': lambda atom: self._resolve_function('slurp',('',)),  # mega hax
     }
-    return resolvers[atom.tag](atom)
+    atype, val = atom
+    return resolvers[atype](val)
 
-  def _resolve_lstlist(self,atom):
-    lits = [self.resolve(c) for c in atom.iterchildren()]
+  def _resolve_lstlist(self, val):
+    lits = [self.resolve(c) for c in val]
     inner_type = lits[0].type.output
-    return Literal([lit.func(None,None) for lit in lits],inner_type.name,inner_type.depth+1)
+    # kinda hack, evaluate each list literal inside
+    vals = [lit.func(None,None) for lit in lits]
+    return Literal(vals,inner_type.name,inner_type.depth+1)
 
   def _resolve_arg(self, arg):
-    if arg.tag == 'pipe':
-      subpipe = self.join_pipe(map(self.resolve,arg.iterchildren()))
+    if type(arg) is not tuple: return arg
+    atype, val = arg
+    if atype is 'pipe':
+      subpipe = self.join_pipe(map(self.resolve,val))
       assert subpipe.type.input.name == 'nil', 'Subpipe must not require input, has type %s' % subpipe.type
       return subpipe.func(None,subpipe.args)
-    elif arg.tag == 'integer':
-      return int(arg.text)
-    elif arg.tag == 'string':
-      return arg.text or ''
-    elif arg.tag == 'regex':
-      return re.compile(arg.text)
-    elif arg.tag == 'ITEM':
-      return re.compile('')  # another big hack, will go away when XML is cut out
     else:
       a = self.resolve(arg)
       if isinstance(a,Literal):
@@ -75,11 +67,7 @@ class Plumbum(object):
   def _resolve_function(self, name, args):
     assert name in self.pipes, 'No such pipe: %s' % name
     pipe = shallowcopy(self.pipes[name])
-    if args is None:
-      args = []
-    elif type(args) is ObjectifiedElement:
-      args = [self._resolve_arg(a) for a in args.iterchildren()]
-    pipe.fill_args(args)
+    pipe.fill_args([self._resolve_arg(a) for a in args])
     return pipe
 
   def join_pipe(self, pipes):

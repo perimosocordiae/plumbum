@@ -50,8 +50,8 @@ class Repl(Cmd):
       print "Error evaluating '%s'" % line
       self.print_exc()
       return
-    if statement.find('name'):
-      print statement.name,'::',t
+    if statement['name']:
+      print statement['name'],'::',t
     else:
       print t
 
@@ -59,7 +59,7 @@ class Repl(Cmd):
     try:
       statement = parse_line(line)
       self.plumbum.define(statement)
-      if statement.find('name'):
+      if statement['name']:
         print 'Defined pipe:', statement.name
       else:
         res = self.plumbum.run()
