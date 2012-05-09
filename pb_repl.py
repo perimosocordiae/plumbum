@@ -3,6 +3,7 @@ from cmd import Cmd
 from glob import glob
 from traceback import print_exc
 from sys import exc_info
+from collections import deque
 from pb_parse import parse_line
 from plumbum import Plumbum
 
@@ -19,17 +20,10 @@ def listify(x):
 class InteractivePB(Plumbum):
   def __init__(self):
     Plumbum.__init__(self)
-    del self.pipes['']  # no special casing for main pipes
-  
-  def define(self, name, raw_pipe):
-    pipe = self.join_pipe(map(self.resolve,raw_pipe))
-    if not name:
-      name = ''
-      assert pipe.type.input.name == 'nil', 'Pipe needs input of type %s' % pipe.type
-    self.pipes[name] = pipe
+    self.pipes[''] = deque([],maxlen=1) # no multiple main pipes
 
   def run(self):
-    main = self.pipes['']
+    main = self.pipes[''][0]
     res = main.func(None,main.args)
     return listify(res)
 
@@ -49,25 +43,27 @@ class Repl(Cmd):
     print "TODO"
 
   def do_typeof(self,line):
-    for lhs,rhs in parse_line(line):
-      try:
-        t = self.plumbum.typeof(rhs)
-      except:
-        print "Error evaluating '%s'" % line
-        self.print_exc()
-        break
-      if lhs: print lhs,'::',t
-      else:   print t
+    statement = parse_line(line)
+    try:
+      t = self.plumbum.typeof(statement)
+    except:
+      print "Error evaluating '%s'" % line
+      self.print_exc()
+      return
+    if statement.find('name'):
+      print statement.name,'::',t
+    else:
+      print t
 
   def default(self,line):
     try:
-      for lhs,rhs in parse_line(line):
-        self.plumbum.define(lhs,rhs)
-        if lhs:
-          print 'Defined pipe:', lhs
-        else:
-          res = self.plumbum.run()
-          if res: print res
+      statement = parse_line(line)
+      self.plumbum.define(statement)
+      if statement.find('name'):
+        print 'Defined pipe:', statement.name
+      else:
+        res = self.plumbum.run()
+        if res: print res
     except KeyboardInterrupt:
       return # keep the interpreter going
     except:

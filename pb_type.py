@@ -66,7 +66,8 @@ class FuncType(object):
       if dd is not None:
         ddd = new_out.depth_difference(new_in)
         if ddd != dd:
-          print dd,ddd,dd-ddd
+          print "TODO: fix deepening bugs"
+          # print dd,ddd,dd-ddd
           #new_out.deepen(dd-ddd)
     ctype = FuncType(new_in, new_out)
     return ctype

@@ -1,5 +1,6 @@
 
 from types import MethodType
+from itertools import count
 from pb_type import *
 
 def auto_map(func, args, iterable, depth):
@@ -56,3 +57,13 @@ class Literal(Pipe):
 
   def __repr__(self):
     return "<literal: %s>" % self.type
+
+class InfiniteRange(Literal):
+  def __init__(self,args):
+    step = 1 if len(args) == 1 else args[1] - args[0]
+    Literal.__init__(self, count(args[0],step), 'int', 1)
+
+class BoundedRange(Literal):
+  def __init__(self,args):
+    step = 1 if len(args) == 2 else args[1] - args[0]
+    Literal.__init__(self, xrange(args[0],args[-1],step), 'int', 1)

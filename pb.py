@@ -12,14 +12,14 @@ def do_repl(debug=False):
 def exec_file(fname):
   fh = sys.stdin if fname == '-' else open(fname)
   pb = Plumbum()
-  for lhs,rhs in parse_file(fh):
-    pb.define(lhs,rhs)
+  for st in parse_file(fh):
+    pb.define(st)
   pb.run()
 
 def exec_blob(blob):
   pb = Plumbum()
-  for lhs,rhs in parse_blob(blob):
-    pb.define(lhs,rhs)
+  for st in parse_blob(blob):
+    pb.define(st)
   pb.run()
 
 if __name__ == '__main__':

@@ -5,18 +5,20 @@ from pb_parse import parse_blob
 import re,sys
 from time import time
 
-def assert_equal(code, expected_out):
+def _make_pb(code):
   pb = InteractivePB()
-  for lhs,rhs in parse_blob(code):
-    pb.define(lhs,rhs)
+  for statement in parse_blob(code):
+    pb.define(statement)
+  return pb
+
+def assert_equal(code, expected_out):
+  pb = _make_pb(code)
   out = pb.run()
   assert out == expected_out, 'Expected %s, got %s' % (expected_out,out)
 
 def assert_error(code, expected_msg):
-  pb = InteractivePB()
   try:
-    for lhs,rhs in parse_blob(code):
-      pb.define(lhs,rhs)
+    pb = _make_pb(code)
     pb.run()
   except Exception as e:
     msg = str(e)
@@ -26,12 +28,12 @@ def assert_error(code, expected_msg):
 
 def assert_type(code, expected_type):
   pb = InteractivePB()
-  for lhs,rhs in parse_blob(code):
-    pb.define(lhs,rhs)
-  if lhs:
-    t = str(pb.pipes[lhs].type)
+  for statement in parse_blob(code):
+    pb.define(statement)
+  if statement.find('name'):
+    t = str(pb.pipes[statement.name].type)
   else:
-    t = str(pb.pipes[''].type.output)
+    t = str(pb.pipes[''][0].type.output)
   assert t == expected_type, 'Expected type %s, got type %s' % (expected_type,t)
 
 def run_tests(*all_tests):
