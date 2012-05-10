@@ -23,8 +23,12 @@ rgx1 = UnitType('regex',1)
 #  - auto-gen pipes for nested lists, different types of lists
 #    - give auto-gen'd pipes the right type sigs
 #  - specify argument type constraints
-#  - specify additional attributes, like infinite-size, lazyness, etc
+#  - specify additional attributes, like infinite-size, lazyness, purity etc
 #
+# TODO: builtins to add
+#  - 'group', for group-by semantics
+#  - 'drop' (like reverse head)
+#  - math operations?
 
 class Slurp(Pipe):
   name = 'slurp'
@@ -44,6 +48,7 @@ class Slurp(Pipe):
 class Shell(Pipe):
   name = 'shell'
   def __init__(self):
+    #TODO: allow input, i.e.: [3,5,4] | `sort -n` | int ==> [3,4,5]
     Pipe.__init__(self, nil0, str1, num_required_args=1)
   def func(self,_,args):
     assert args[0], 'Empty shell command is invalid'
