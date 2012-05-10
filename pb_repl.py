@@ -60,7 +60,7 @@ class Repl(Cmd):
       statement = parse_line(line)
       self.plumbum.define(statement)
       if statement['name']:
-        print 'Defined pipe:', statement.name
+        print 'Defined pipe:', statement['name']
       else:
         res = self.plumbum.run()
         if res: print res
