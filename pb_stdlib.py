@@ -183,7 +183,12 @@ class Zip(Pipe):
     a = ArbType(1)
     Pipe.__init__(self, a, a.deepen(1), 1)
   def func(self, inpipe, args):
-    return izip(inpipe,args[0])
+    tozip = args[0]
+    if isinstance(tozip,Pipe):
+      assert tozip.type.input.name == 'nil', 'Subpipe must not require input, has type %s' % tozip.type
+      return izip(inpipe, tozip.func(None,tozip.args))
+    else:
+      return izip(inpipe,tozip)
 
 class Concat(Pipe):
   name = 'concat'

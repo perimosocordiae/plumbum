@@ -55,9 +55,7 @@ class Plumbum(object):
     if type(arg) is not tuple: return arg
     atype, val = arg
     if atype is 'pipe':
-      subpipe = self.join_pipe(map(self.resolve,val))
-      assert subpipe.type.input.name == 'nil', 'Subpipe must not require input, has type %s' % subpipe.type
-      return subpipe.func(None,subpipe.args)
+      return self.join_pipe(map(self.resolve,val))
     else:
       a = self.resolve(arg)
       if isinstance(a,Literal):
