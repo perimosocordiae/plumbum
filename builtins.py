@@ -1,5 +1,21 @@
 import sys
+from itertools import cycle, repeat
 from pblib import Builtin
+
+
+@Builtin()
+def cat(pipe):
+  return ''.join(str(p) for p in pipe)
+
+
+Builtin(name='repeat',arity=1)(repeat)
+Builtin(name='uniq',arity=1)(set)
+
+@Builtin()
+def interleave(p1, p2):
+  nexts = (iter(p1).next, iter(p2).next)
+  for n in cycle(nexts):
+    yield n()
 
 
 @Builtin()
