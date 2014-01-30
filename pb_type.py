@@ -7,11 +7,9 @@ class UnitType(object):
     return '['*self.depth + self.name + ']'*self.depth
   def deepen(self, dd):
     return UnitType(self.name,self.depth+dd)
-  def depth_difference(self, other):
-    d = self.depth - other.depth
-    if type(other) is ArbType and other.depth > 0:
-      return min(d,0)  # arbtype(1+) can represent unit(1+)
-    return d
+  def matches(self, other):
+    if self.depth != other.depth: return False
+    return self.name == other.name or type(other) is ArbType
 
 #TODO: really handle arbtypes appropriately. Current depth hack is not great.
 class ArbType(UnitType):
@@ -23,11 +21,8 @@ class ArbType(UnitType):
     a = ArbType(self.depth+dd)
     a.name = self.name
     return a
-  def depth_difference(self, other):
-    d = self.depth - other.depth
-    if self.depth > 0 and type(other) is UnitType:
-      return max(d,0)  # see note for UnitType.depth_difference
-    return d
+  def matches(self, other):
+    return self.depth == other.depth
 
 class FuncType(object):
   def __init__(self, _input, output):
@@ -40,33 +35,21 @@ class FuncType(object):
     return "(%r -> %r)" % (self.input, self.output)
   def deepen(self, dd):
     return FuncType(self.input,self.output.deepen(dd))
+  def is_vartyped(self):
+    return type(self.input) is ArbType and type(self.output) is ArbType and self.input.name==self.output.name
+  def convert_base(self, base_type):
+    assert self.is_vartyped(), 'Can only convert base for vartyped funcs'
+    self.input.name = base_type.name
+    self.output.name = base_type.name
   def join_types(self,other):
     if other.input.name == 'nil':
       raise TypeError('Cannot pass %r to nil input'%self.output)
-    if self.output.name != other.input.name and not ((type(self.output) is ArbType) or (type(other.input) is ArbType)):
+    if not self.output.matches(other.input):
       raise TypeError('type mismatch: %r <> %r' % (self.output,other.input))
-    if type(other.input) is ArbType and type(other.output) is ArbType and other.input.name==other.output.name:
-      dd = other.output.depth - other.input.depth
-      new_out = self.output.deepen(dd)
+    if other.is_vartyped():
+      # preserve types, but pass along the depth change
+      new_out = self.output.deepen(other.output.depth - other.input.depth)
     else:
-      dd = None
       new_out = other.output
-    new_in = self.input
-    ddepth = self.output.depth_difference(other.input)
-    if ddepth > 0:
-      new_out = new_out.deepen(ddepth)
-      if dd is not None:
-        ddd = new_out.depth_difference(new_in)
-        if ddd != dd:
-          new_in = new_in.deepen(ddd-dd)
-    elif ddepth < 0:
-      assert new_in.name is not 'nil', "Cannot auto-deepen a concrete input"
-      new_in = new_in.deepen(-ddepth)
-      if dd is not None:
-        ddd = new_out.depth_difference(new_in)
-        if ddd != dd:
-          print "TODO: fix deepening bugs"
-          # print dd,ddd,dd-ddd
-          #new_out.deepen(dd-ddd)
-    ctype = FuncType(new_in, new_out)
+    ctype = FuncType(self.input, new_out)
     return ctype

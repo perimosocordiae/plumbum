@@ -31,15 +31,20 @@ class Plumbum(object):
     return self.join_pipe(map(self.resolve,statement['pipe'])).type
 
   def resolve(self, atom):
+    detuple = lambda t: t[1]
     resolvers = {
+      'pipe': lambda val: self.join_pipe(map(self.resolve,val)),
       'function': lambda val: self._resolve_function(val['name'],val['arguments']),
       'emptylist': lambda val: Literal(val,'arb',1),
       'irange': InfiniteRange,
       'brange': BoundedRange,
-      'intlist': lambda val: Literal(val,'int',1),
-      'strlist': lambda val: Literal(val,'str',1),
-      'rgxlist': lambda val: Literal(val,'rgx',1),
+      'intlist': lambda val: Literal(map(detuple,val),'int',1),
+      'strlist': lambda val: Literal(map(detuple,val),'str',1),
+      'rgxlist': lambda val: Literal(map(detuple,val),'rgx',1),
       'lstlist': self._resolve_lstlist,
+      'int': lambda val: Literal(val,'int',0),
+      'str': lambda val: Literal(val,'str',0),
+      'rgx': lambda val: Literal(val,'rgx',0),
     }
     atype, val = atom
     return resolvers[atype](val)
@@ -51,21 +56,10 @@ class Plumbum(object):
     vals = [lit.func(None,None) for lit in lits]
     return Literal(vals,inner_type.name,inner_type.depth+1)
 
-  def _resolve_arg(self, arg):
-    if type(arg) is not tuple: return arg
-    atype, val = arg
-    if atype is 'pipe':
-      return self.join_pipe(map(self.resolve,val))
-    else:
-      a = self.resolve(arg)
-      if isinstance(a,Literal):
-        return a.value
-      return a
-
   def _resolve_function(self, name, args):
     assert name in self.pipes, 'No such pipe: %s' % name
     pipe = shallowcopy(self.pipes[name])
-    pipe.fill_args([self._resolve_arg(a) for a in args])
+    pipe.fill_args(map(self.resolve, args))
     return pipe
 
   def join_pipe(self, pipes):

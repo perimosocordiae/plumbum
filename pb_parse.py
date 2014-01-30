@@ -1,5 +1,7 @@
 import re
-from pyparsing import *
+from pyparsing import ParserElement, ParseException
+from pyparsing import Suppress, QuotedString, Word, Optional, Forward, ZeroOrMore
+from pyparsing import alphas, alphanums, nums, delimitedList, pythonStyleComment, empty
 ParserElement.enablePackrat()
 
 def __setup_parser():
@@ -7,9 +9,9 @@ def __setup_parser():
   LSQUARE,RSQUARE,LCURLY,RCURLY,EQ,PIPE,SEMI = map(Suppress,'[]{}=|;')
 
   # non-iterable literals
-  integer = simple(Word('-'+nums,nums), int)
-  string  = simple(QuotedString("'") | QuotedString('"'), str)
-  regex   = simple(QuotedString('/'), re.compile)
+  integer = simple(Word('-'+nums,nums), 'int', int)
+  string  = simple(QuotedString("'") | QuotedString('"'), 'str', str)
+  regex   = simple(QuotedString('/'), 'rgx', re.compile)
 
   # list/range literals
   emptylist = named(LSQUARE + RSQUARE, 'emptylist')
@@ -28,7 +30,7 @@ def __setup_parser():
   shell = special(QuotedString('`'), 'shell')
 
   # functions and arguments
-  name = simple(Word(alphas, alphanums+'_'), lambda n: ('name',n))
+  name = simple(Word(alphas, alphanums+'_'), 'name', str)
   subpipe = Forward()
   function = Forward()
   argument = string | list_lit | regex | integer | subpipe | slurp | shell | function
@@ -41,15 +43,15 @@ def __setup_parser():
   # an expression/subpipe is multiple atoms piped together
   expression = named(atom + ZeroOrMore(PIPE + atom), 'pipe')
   subpipe << LCURLY + expression + RCURLY
-  
+
   # statements and lines are pretty standard
   statement = Optional(name + EQ, default=('name','')) + expression
   statement.setParseAction(lambda parse: dict(parse.asList()))
   line = (statement | empty).ignore(pythonStyleComment)
   return line.parseString
 
-def simple(p, func):
-  pa = lambda parse: func(parse[0])
+def simple(p, name, func):
+  pa = lambda parse: (name, func(parse[0]))
   return p.setParseAction(pa)
 
 def named(p, name):
@@ -57,7 +59,8 @@ def named(p, name):
   return p.setParseAction(pa)
 
 def special(p, func_name):
-  pa = lambda parse: ('function',{'name':func_name, 'arguments':parse.asList()})
+  #FIXME: gross hack to type the args
+  pa = lambda parse: ('function',{'name':func_name, 'arguments':[('str',parse.asList()[0])]})
   return p.setParseAction(pa)
 
 _parser = __setup_parser()

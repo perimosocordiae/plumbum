@@ -73,17 +73,17 @@ equality_tests = (
   ('<%s> | head 1'%FILE, ['#!/usr/bin/env python\n']),
   ('`echo 1`', ['1\n']),
   ('["a","","b"] | grep /./', ['a','b']),
-  ('[1..20] | string | grep /3/', ['3','13']),
+  ('[1..20] | map string | grep /3/', ['3','13']),
   ('[4,2,5,1] | sort', [1,2,4,5]),
   ('[1,-5,0] | count', 3),
-  ('[9,8..0] | string | sort | head 2', ['1','2']),
-  ('`echo "1\\n2\\n3"` | int', [1,2,3]),
-  ('[1,2,3] | string', ['1','2','3']),
+  ('[9,8..0] | map string | sort | head 2', ['1','2']),
+  ('`echo "1\\n2\\n3"` | map int', [1,2,3]),
+  ('[1,2,3] | map string', ['1','2','3']),
   ('`echo "1\\n2\\n3"` | strip', ['1','2','3']),
   ('[2,3,3,2] | uniq', [2,3,2]),
   ('["a"] | sort | strip', ['a']),
-  ('["a","b"] | ord', [97,98]),
-  ('[50] | chr | ord', [50]),
+  ('["a","b"] | map ord', [97,98]),
+  ('[50] | map chr | map ord', [50]),
   ('[1..10] | sum', 45),
   ('<http://www.google.com> | head 1 | count', 1),   # this is test 32, exempt from timeout checks
   ('[[2,3],[4,5]]', [[2,3],[4,5]]),
@@ -93,7 +93,7 @@ equality_tests = (
   ('[[4,5],[6,3]] | head 1', [[4,5]]),
   ('[2,3] | zip [4,5]', [[2,4],[3,5]]),
   ('[2,3] | zip [4,5] | head 1', [[2,4]]),
-  ('[2,3] | zip [4,5] | string', [['2','4'],['3','5']]),
+  ('[2,3] | zip [4,5] | map string', [['2','4'],['3','5']]),
   ('[2,3] | zip {[4,5]}', [[2,4],[3,5]]),
   ('[2,3] | zip [4,5] | flatten', [2,4,3,5]),
   #('[1..] | string | zip {`yes`} | head 2 | join ""', ['1y\n','2y\n']),  # inf looping?
@@ -125,7 +125,7 @@ type_tests = (
   ('["foo"]', '[str]'),
   ('<>', '[str]'),
   ('``', '[str]'),
-  ('`` | strip', '[str]'),
+  ('`` | map strip', '[str]'),
   ('[[1]]', '[[int]]'),
   ('[2,3] | zip [4,3]', '[[int]]'),
   ('[[4,5],[6,3]] | head 1', '[[int]]'),
@@ -134,11 +134,11 @@ type_tests = (
 )
 
 if __name__ == '__main__':
-  failed,total = run_tests((assert_equal, equality_tests), 
+  failed,total = run_tests((assert_equal, equality_tests),
                            (assert_error, error_tests),
                            (assert_type,  type_tests))
   if failed == 0:
     print "SUCCESS:",
   print "%d/%d tests failed" % (failed,total)
-  
-  
+
+

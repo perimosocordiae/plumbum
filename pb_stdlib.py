@@ -5,7 +5,7 @@ from itertools import izip, chain
 from collections import deque
 from urllib2 import urlopen
 from pb_type import UnitType, ArbType, FuncType
-from pb_pipe import Pipe
+from pb_pipe import Pipe, Literal
 
 # suppress 'broken pipe' error messages
 signal.signal(signal.SIGPIPE, signal.SIG_DFL)
@@ -18,6 +18,8 @@ str1 = UnitType('str',1)
 rgx0 = UnitType('regex')
 rgx1 = UnitType('regex',1)
 
+strlit = lambda s: Literal(s,'str',0)
+intlit = lambda i: Literal(i,'int',0)
 #
 # TODO: make the Pipe objects here directly!
 #  - auto-gen pipes for nested lists, different types of lists
@@ -33,13 +35,14 @@ rgx1 = UnitType('regex',1)
 class Slurp(Pipe):
   name = 'slurp'
   def __init__(self):
-    Pipe.__init__(self, nil0, str1, num_required_args=1, default_args=[''])
+    Pipe.__init__(self, nil0, str1, num_required_args=1, default_args=[strlit('')])
   def func(self, _, args):
+    filename = args[0].value
     try:
-      fh = sys.stdin if args[0] == '' else open(args[0])
+      fh = sys.stdin if filename == '' else open(filename)
     except IOError as e:
       if e.errno == 2:  # no such file
-        fh = urlopen(args[0])
+        fh = urlopen(filename)
       else:
         raise e
     for line in fh:
@@ -51,8 +54,9 @@ class Shell(Pipe):
     #TODO: allow input, i.e.: [3,5,4] | `sort -n` | int ==> [3,4,5]
     Pipe.__init__(self, nil0, str1, num_required_args=1)
   def func(self,_,args):
-    assert args[0], 'Empty shell command is invalid'
-    proc = Popen(args[0],shell=True,stdout=PIPE)
+    cmd = args[0].value
+    assert cmd, 'Empty shell command is invalid'
+    proc = Popen(cmd,shell=True,stdout=PIPE)
     line = ''
     while True:
         data = select([proc.stdout],[],[])[0][0]
@@ -68,7 +72,7 @@ class Grep(Pipe):
   def __init__(self):
     Pipe.__init__(self, str1, num_required_args=1)
   def func(self, inpipe, args):
-    patt = args[0]
+    patt = args[0].value
     for s in inpipe:
       if re.search(patt, s):
         yield s
@@ -76,10 +80,10 @@ class Grep(Pipe):
 class Head(Pipe):
   name = 'head'
   def __init__(self):
-    Pipe.__init__(self, ArbType(1), num_required_args=1, default_args=[10])
+    Pipe.__init__(self, ArbType(1), num_required_args=1, default_args=[intlit(10)])
   def func(self,inpipe,args):
     it = iter(inpipe)
-    for _ in xrange(args[0]):
+    for _ in xrange(args[0].value):
       try:
         yield next(it)
       except StopIteration:
@@ -88,9 +92,9 @@ class Head(Pipe):
 class Tail(Pipe):
   name = 'tail'
   def __init__(self):
-    Pipe.__init__(self, ArbType(1), num_required_args=1, default_args=[10])
+    Pipe.__init__(self, ArbType(1), num_required_args=1, default_args=[intlit(10)])
   def func(self,inpipe,args):
-    return deque(inpipe,maxlen=args[0])
+    return deque(inpipe,maxlen=args[0].value)
 
 class Sort(Pipe):
   name = 'sort'
@@ -127,21 +131,21 @@ class Print(Pipe):
     else:
       sys.stdout.write(str(x))
     # TODO: fix stupid \\n and \\t issue
-    sys.stdout.write(args[0])
+    sys.stdout.write(args[0].value)
 
 class Strip(Pipe):
   name = 'strip'
   def __init__(self):
-    Pipe.__init__(self, str0, num_required_args=1, default_args=[None])
+    Pipe.__init__(self, str0, num_required_args=1, default_args=[strlit(None)])
   def func(self,s,args):
-    return s.strip(args[0])
+    return s.strip(args[0].value)
 
 class Split(Pipe):
   name = 'split'
   def __init__(self):
-    Pipe.__init__(self, str0, str1, 1, [None])
+    Pipe.__init__(self, str0, str1, 1, [strlit(None)])
   def func(self,s,args):
-    sep = args[0]
+    sep = args[0].value
     if not sep or type(sep) is str:
       if sep is '': return list(s)  # can't split on an empty string
       return s.split(sep)
@@ -193,14 +197,14 @@ class Zip(Pipe):
       assert tozip.type.input.name == 'nil', 'Subpipe must not require input, has type %s' % tozip.type
       return izip(inpipe, tozip.func(None,tozip.args))
     else:
-      return izip(inpipe,tozip)
+      return izip(inpipe,tozip.value)
 
 class Concat(Pipe):
   name = 'concat'
   def __init__(self):
     Pipe.__init__(self, ArbType(1))
   def func(self, inpipe, args):
-    return chain(inpipe,args[0])
+    return chain(inpipe,args[0].value)
 
 class Flatten(Pipe):
   name = 'flatten'
@@ -220,10 +224,23 @@ class Compact(Pipe):
 class Join(Pipe):
   name = 'join'
   def __init__(self):
-    Pipe.__init__(self, str1, str0, 1, [''])
+    Pipe.__init__(self, str1, str0, 1, [strlit('')])
   def func(self, inpipe, _):
-    return args[0].join(inpipe)
+    return args[0].value.join(inpipe)
+
+class Map(Pipe):
+  name = 'map'
+  def __init__(self):
+    Pipe.__init__(self, ArbType(1), num_required_args=1)
+    self.derived_type_arg_index = 0
+  def func(self, inpipe, args):
+    tomap = args[0]
+    assert isinstance(tomap, Pipe), 'Can only map Pipes'
+    assert tomap.type.input.name != 'nil', 'Mapped Pipe must take input'
+    for x in inpipe:
+      yield tomap.func(x, tomap.args)
+
 
 stdlib = [Slurp,Shell,Grep,Head,Tail,Sort,Uniq,Count,Print,Strip,Split,
-          Int,String,Ord,Chr,Sum,Zip,Concat,Flatten,Compact]
+          Int,String,Ord,Chr,Sum,Zip,Concat,Flatten,Compact,Map]
 stdlib = dict((pipe.name,pipe) for pipe in stdlib)
