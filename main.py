@@ -6,12 +6,6 @@ import pblib
 import builtins  # required to populate pblib.builtins
 
 
-def run(program):
-  leftovers = program([])
-  if leftovers:
-    print >>sys.stderr, 'Discarding %d unused items from stack' % len(leftovers)
-
-
 def parse(tokens, state):
   # The best/worst kind of parser: hand-rolled!
   prog = []
@@ -51,12 +45,17 @@ def parse(tokens, state):
   return pblib.Pipe('main', prog)
 
 
-def evaluate(tokens, state):
+def evaluate(tokens, state, repl_mode=False):
   try:
     program = parse(tokens, state)
-    run(program)
+    leftovers = program([])
   except Exception as e:
     print >>sys.stderr, e
+  if leftovers:
+    if repl_mode:
+      print 'out:', ', '.join(str(list(l)) if hasattr(l,'__iter__') else l for l in leftovers)
+    else:
+      print >>sys.stderr, "Warning: final stack had length %d" % len(leftovers)
 
 
 def tokenize(code):
@@ -82,7 +81,7 @@ def main(opts):
     except EOFError:
       print
       break
-    evaluate(tokens, state)
+    evaluate(tokens, state, repl_mode=True)
 
 
 if __name__ == '__main__':
