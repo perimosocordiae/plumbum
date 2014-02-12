@@ -10,6 +10,7 @@ def cat(pipe):
 
 Builtin(name='repeat',arity=1)(repeat)
 Builtin(name='uniq',arity=1)(set)
+Builtin(name='sort',arity=1)(sorted)
 
 @Builtin()
 def interleave(p1, p2):
