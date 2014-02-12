@@ -1,6 +1,8 @@
 import re
 import sys
 from itertools import cycle, repeat
+from select import select
+from subprocess import Popen, PIPE
 from pblib import Builtin
 
 
@@ -34,7 +36,17 @@ def slurp(path):
 
 @Builtin()
 def shell(cmd):
-  print 'got shell', cmd
+  proc = Popen(cmd, shell=True, stdout=PIPE)
+  line = ''
+  while True:
+   data = select([proc.stdout],[],[])[0][0]
+   c = data.read(1).decode('utf-8')
+   if not c:
+     return
+   line += c
+   if c == '\n':
+     yield line
+     line = ''
 
 
 @Builtin()
