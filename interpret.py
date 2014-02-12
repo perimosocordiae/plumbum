@@ -23,8 +23,8 @@ def parse(tokens, state):
       prog.append(token[1:-1])
       prog.append(state['shell'])
     elif c == '/':
-      prog.append(token)  # TODO: parse it a bit
-      prog.append(['regex'])
+      prog.append(token)
+      prog.append(state['regex'])
     elif c == '[':
       # TODO: support .. ranges, regex literals in lists
       prog.append(ast.literal_eval(token))

@@ -1,3 +1,4 @@
+import re
 import sys
 from itertools import cycle, repeat
 from pblib import Builtin
@@ -6,6 +7,13 @@ from pblib import Builtin
 @Builtin()
 def cat(pipe):
   return ''.join(str(p) for p in pipe)
+
+
+@Builtin()
+def grep(pipe, regex):
+  for p in pipe:
+    if regex.search(p):
+      yield p
 
 
 Builtin(name='repeat',arity=1)(repeat)
@@ -31,7 +39,9 @@ def shell(cmd):
 
 @Builtin()
 def regex(literal):
-  print 'got regex', literal
+  # TODO: actually parse the regex
+  assert literal[0] == '/' and literal[-1] == '/', 'TODO: parse literal'
+  return re.compile(literal[1:-1])
 
 
 @Builtin(name='print')
