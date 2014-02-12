@@ -43,7 +43,15 @@ def parse(tokens, state):
   return pblib.Pipe('main', prog)
 
 
+def listify(x):
+  '''Turn all nested generators and such into lists of concrete values'''
+  if hasattr(x,'__iter__'):
+    return map(listify,x)
+  return x
+
+
 def evaluate(tokens, state, repl_mode=False):
+  leftovers = None
   try:
     program = parse(tokens, state)
     leftovers = program([])
@@ -51,7 +59,7 @@ def evaluate(tokens, state, repl_mode=False):
     print >>sys.stderr, e
   if leftovers:
     if repl_mode:
-      print 'out:', ', '.join(str(list(l)) if hasattr(l,'__iter__') else l for l in leftovers)
+      print 'out:', ', '.join(str(listify(l)) for l in leftovers)
     else:
       print >>sys.stderr, "Warning: final stack had length %d" % len(leftovers)
 
