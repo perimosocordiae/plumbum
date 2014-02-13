@@ -3,6 +3,8 @@ builtins = {}
 
 class Func(object):
   def __str__(self):
+    return self.__repr__()
+  def __repr__(self):
     return '<%s: %s>' % (self.__class__.__name__, self.name)
 
 class Builtin(Func):
