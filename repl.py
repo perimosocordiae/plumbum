@@ -3,7 +3,6 @@ from cmd import Cmd
 from glob import glob
 from traceback import print_exc
 from sys import exc_info
-from collections import deque
 
 from interpret import tokenize, evaluate
 
@@ -22,7 +21,7 @@ class Repl(Cmd):
   def do_EOF(self,line):
     print # move past the prompt
     return True
-  
+
   def default(self,line):
     try:
       tokens = tokenize(line)
