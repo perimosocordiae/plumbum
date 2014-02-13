@@ -7,21 +7,27 @@ import pblib
 def parse(tokens, state):
   # The best/worst kind of parser: hand-rolled!
   prog = []
-  assign = False
+  assign = None
+  pipe_start = 0
   for token in tokens:
     c = token[0]
     if c == '#':
       break
+    elif c == '|':
+      # move the first expr in the pipe to the end
+      prog.append(prog.pop(pipe_start))
+      pipe_start = len(prog)
     elif c in '1234567890-\'"':
       prog.append(ast.literal_eval(token))
     elif token == '=':
-      assign = True
+      assert len(prog) == 1, 'Assigning to >1 name'
+      assign = prog.pop()
     elif c == '<':
-      prog.append(token[1:-1])
       prog.append(state['slurp'])
-    elif c == '`':
       prog.append(token[1:-1])
+    elif c == '`':
       prog.append(state['shell'])
+      prog.append(token[1:-1])
     elif c == '/':
       prog.append(token)
       prog.append(state['regex'])
@@ -29,18 +35,14 @@ def parse(tokens, state):
       # TODO: support .. ranges, regex literals in lists
       prog.append(ast.literal_eval(token))
     else:
-      exists = token in state
-      if assign:
-        state[token] = pblib.Pipe(token, prog)
-        prog = []
-        assign = False
-        if exists:
-          print >>sys.stderr, 'Warning: overwriting definition of', token
-      elif exists:
-        prog.append(state[token])
-      else:
-        raise Exception('Undefined identifier: %r' % token)
-  return pblib.Pipe('main', prog)
+      prog.append(token)
+  # move the first expr in the last pipe to the end
+  if pipe_start < len(prog) - 1:
+    prog.append(prog.pop(pipe_start))
+  if assign is not None:
+    state[assign] = pblib.Pipe(assign, prog)
+  else:
+    return pblib.Pipe('main', prog)
 
 
 def listify(x):
@@ -51,12 +53,10 @@ def listify(x):
 
 
 def evaluate(tokens, state, repl_mode=False):
-  leftovers = None
-  try:
-    program = parse(tokens, state)
-    leftovers = program([])
-  except Exception as e:
-    print >>sys.stderr, e
+  program = parse(tokens, state)
+  if not program:
+    return
+  leftovers = program([], state)
   if leftovers:
     if repl_mode:
       print 'out:', ', '.join(str(listify(l)) for l in leftovers)
@@ -82,7 +82,10 @@ def tokenize(code):
       continue
     token += char
     if token_type is None:
-      if char in WHITESPACE:
+      if char == '|':
+        yield token
+        token = ''
+      elif char in WHITESPACE:
         token = token[:-1]
       elif char in '"\'`<':
         token_type = 'str'

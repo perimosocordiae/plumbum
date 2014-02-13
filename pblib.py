@@ -7,6 +7,7 @@ class Func(object):
   def __repr__(self):
     return '<%s: %s>' % (self.__class__.__name__, self.name)
 
+
 class Builtin(Func):
   def __init__(self, arity=None, name=None):
     assert arity is None or type(arity) is int, 'Invalid arity: '+arity
@@ -22,7 +23,7 @@ class Builtin(Func):
       self.name = self.func.func_name
     global builtins
     builtins[self.name] = self
-  def __call__(self, stack_or_func):
+  def __call__(self, stack_or_func, unused_state=None):
     if self.func is None:
       self.one_time_setup(stack_or_func)
       return self
@@ -40,10 +41,12 @@ class Pipe(Func):
   def __init__(self, name, parts):
     self.name = name
     self.parts = parts
-  def __call__(self, stack):
+  def __call__(self, stack, state):
     for p in self.parts:
+      if type(p) is str and p in state:
+        p = state[p]
       if isinstance(p, Func):
-        stack = p(stack)
+        stack = p(stack, state)
       else:
         stack.append(p)
     return stack

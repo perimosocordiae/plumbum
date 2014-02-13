@@ -1,6 +1,6 @@
 
 # pipe joiner -> joined
-repeat interleave cat = join
+join = repeat | interleave | cat
 
-"\n" join print = println
+println = join "\n" | print
 
