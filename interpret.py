@@ -86,7 +86,7 @@ def tokenize(code):
         token = token[:-1]
       elif char in '"\'`<':
         token_type = 'str'
-      elif char in '[':
+      elif char == '[':
         token_type = 'list'
         match_depth = 1
       elif char == '/':
@@ -108,6 +108,7 @@ def tokenize(code):
         match_depth -= 1
         if match_depth == 0:
           yield token
+          token = ''
           token_type = None
     elif token_type == 'regex' and char == '/':
       token_type = 'ident'  # hack
@@ -115,4 +116,6 @@ def tokenize(code):
       yield token[:-1]
       token = ''
       token_type = None
+  if token_type == 'ident':
+    yield token
 
