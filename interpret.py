@@ -13,7 +13,7 @@ def evaluate(code, state, repl_mode=False):
   program = parse(tokens, state)
   if not program:
     return
-  leftovers = program([], state)
+  leftovers = program.run([], state)
   if leftovers:
     if repl_mode:
       print 'out:', ', '.join(str(listify(l)) for l in leftovers)
