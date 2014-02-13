@@ -4,22 +4,21 @@ from optparse import OptionParser
 import pblib
 import builtins  # required to populate pblib.builtins
 
-from interpret import parse, tokenize, evaluate
+from interpret import evaluate
 from repl import Repl
 
 
 def main(opts):
   state = pblib.builtins
   for line in open(opts.prelude):
-    parse(tokenize(line), state)
+    evaluate(line, state)
   if opts.e:
-    tokens = tokenize(opts.e)
-    return evaluate(tokens, state)
+    evaluate(opts.e, state)
+    return
   if opts.f:
     fh = sys.stdin if opts.f == '-' else open(opts.f)
     for line in fh:
-      tokens = tokenize(line)
-      evaluate(tokens, state)
+      evaluate(line, state)
     return
   # REPL mode
   welcome = 'Loaded %d builtin functions' % len(state)

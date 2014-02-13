@@ -3,6 +3,23 @@ import sys
 
 import pblib
 
+__all__ = ['evaluate']
+
+
+def evaluate(code, state, repl_mode=False):
+  '''Parses and runs a statement, modifying the program state.
+  If repl_mode is True, prints any leftover items from the stack.'''
+  tokens = tokenize(code)
+  program = parse(tokens, state)
+  if not program:
+    return
+  leftovers = program([], state)
+  if leftovers:
+    if repl_mode:
+      print 'out:', ', '.join(str(listify(l)) for l in leftovers)
+    else:
+      print >>sys.stderr, "Warning: final stack had length %d" % len(leftovers)
+
 
 def parse(tokens, state):
   # The best/worst kind of parser: hand-rolled!
@@ -50,20 +67,6 @@ def listify(x):
   if hasattr(x,'__iter__'):
     return map(listify,x)
   return x
-
-
-def evaluate(tokens, state, repl_mode=False):
-  '''Parses and runs a token sequence, modifying the program state.
-  If repl_mode is True, prints any leftover items from the stack.'''
-  program = parse(tokens, state)
-  if not program:
-    return
-  leftovers = program([], state)
-  if leftovers:
-    if repl_mode:
-      print 'out:', ', '.join(str(listify(l)) for l in leftovers)
-    else:
-      print >>sys.stderr, "Warning: final stack had length %d" % len(leftovers)
 
 
 def tokenize(code):

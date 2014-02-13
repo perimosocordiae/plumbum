@@ -3,7 +3,7 @@ from glob import glob
 from traceback import print_exc
 from sys import exc_info
 
-from interpret import tokenize, evaluate
+from interpret import evaluate
 
 
 def terse_trace():
@@ -25,8 +25,7 @@ class Repl(Cmd):
 
   def default(self,line):
     try:
-      tokens = tokenize(line)
-      evaluate(tokens, self.state, repl_mode=True)
+      evaluate(line, self.state, repl_mode=True)
     except KeyboardInterrupt:
       return  # keep the interpreter going
     except:
