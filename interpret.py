@@ -53,6 +53,8 @@ def listify(x):
 
 
 def evaluate(tokens, state, repl_mode=False):
+  '''Parses and runs a token sequence, modifying the program state.
+  If repl_mode is True, prints any leftover items from the stack.'''
   program = parse(tokens, state)
   if not program:
     return
@@ -65,6 +67,7 @@ def evaluate(tokens, state, repl_mode=False):
 
 
 def tokenize(code):
+  '''Converts a single 'line' of Plumbum into a sequence of token strings.'''
   token = ''
   token_type = None  # one of ('str','list','regex','ident')
   escape = False
@@ -121,4 +124,3 @@ def tokenize(code):
       token_type = None
   if token_type == 'ident':
     yield token
-

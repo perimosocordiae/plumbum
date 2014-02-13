@@ -22,6 +22,7 @@ Builtin(name='repeat',arity=1)(repeat)
 Builtin(name='uniq',arity=1)(set)
 Builtin(name='sort',arity=1)(sorted)
 
+
 @Builtin()
 def interleave(p1, p2):
   nexts = (iter(p1).next, iter(p2).next)
@@ -61,10 +62,10 @@ def _print(pipe):
   for line in pipe:
     sys.stdout.write(str(line))
 
+
 @Builtin()
 def head(pipe, n):
   for i,line in enumerate(pipe):
     if i >= n:
       break
     yield line
-
