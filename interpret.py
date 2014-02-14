@@ -2,6 +2,7 @@ import ast
 import sys
 
 import pblib
+from tokenize import tokenize
 
 __all__ = ['evaluate']
 
@@ -67,63 +68,3 @@ def listify(x):
   if hasattr(x,'__iter__'):
     return map(listify,x)
   return x
-
-
-def tokenize(code):
-  '''Converts a single 'line' of Plumbum into a sequence of token strings.'''
-  token = ''
-  token_type = None  # one of ('str','list','regex','ident')
-  escape = False
-  comment = False
-  match_depth = 0
-  flip = lambda c: c if c != '<' else '>'
-  WHITESPACE = ' \t\n\r'
-  for char in code:
-    if comment:
-      if char == '\n':
-        comment = False
-      continue
-    if char == '#':
-      comment = True
-      continue
-    token += char
-    if token_type is None:
-      if char == '|':
-        yield token
-        token = ''
-      elif char in WHITESPACE:
-        token = token[:-1]
-      elif char in '"\'`<':
-        token_type = 'str'
-      elif char == '[':
-        token_type = 'list'
-        match_depth = 1
-      elif char == '/':
-        token_type = 'regex'
-      else:
-        token_type = 'ident'
-    elif char == '\\' and not escape:
-      escape = True
-    elif escape:
-      escape = False
-    elif token_type == 'str' and char == flip(token[0]):
-      yield token
-      token = ''
-      token_type = None
-    elif token_type == 'list' and char in "[]":
-      if char == '[':
-        match_depth += 1
-      else:
-        match_depth -= 1
-        if match_depth == 0:
-          yield token
-          token = ''
-          token_type = None
-    elif token_type == 'regex' and char == '/':
-      token_type = 'ident'  # hack
-    elif token_type == 'ident' and char in WHITESPACE:
-      yield token[:-1]
-      token = ''
-      token_type = None
-  if token_type == 'ident':
-    yield token
