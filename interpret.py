@@ -2,7 +2,7 @@ import ast
 import sys
 
 import pblib
-from tokenize import tokenize
+from lexer import tokenize
 
 __all__ = ['evaluate']
 
