@@ -25,12 +25,14 @@ class Repl(Cmd):
 
   def default(self,line):
     try:
-      evaluate(line, self.state, repl_mode=True)
+      stack = evaluate(line, self.state, return_leftovers=True)
     except KeyboardInterrupt:
       return  # keep the interpreter going
     except:
       print "Error evaluating '%s'" % line
       self.print_exc()
+    if stack:
+      print 'out:', ', '.join(map(str, stack))
 
   def completedefault(self,text,line,beg,end):
     lch,rch = line.rfind('<'),line.rfind('>')

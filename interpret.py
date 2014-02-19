@@ -7,19 +7,17 @@ from lexer import tokenize
 __all__ = ['evaluate']
 
 
-def evaluate(code, state, repl_mode=False):
-  '''Parses and runs a statement, modifying the program state.
-  If repl_mode is True, prints any leftover items from the stack.'''
+def evaluate(code, state, return_leftovers=False):
+  '''Parses and runs a statement, modifying the program state.'''
   tokens = tokenize(code)
   program = parse(tokens, state)
   if not program:
     return
   leftovers = program.run([], state)
+  if return_leftovers:
+    return map(listify, leftovers)
   if leftovers:
-    if repl_mode:
-      print 'out:', ', '.join(str(listify(l)) for l in leftovers)
-    else:
-      print >>sys.stderr, "Warning: final stack had length %d" % len(leftovers)
+    print >>sys.stderr, "Warning: final stack had length %d" % len(leftovers)
 
 
 def parse(tokens, state):
