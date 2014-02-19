@@ -97,9 +97,9 @@ equality_tests = (
 
 error_tests = (
   ('[1] | <>', 'Cannot pass [int] to nil input'),
-  ('grep /foo/', 'Pipe needs input of type ([str] -> [str])'),
+  ('grep /foo/',  'stack underflow when calling <Builtin: grep>'),
   ('[] | grep /foo/ 4', 'Too many arguments to grep: arg 1 (4)'),
   ('["a","4"] | grep 4', 'first argument must be string or compiled pattern'),
-  ('[] | grep', 'Missing required argument for grep'),
+  ('[] | grep',  'stack underflow when calling <Builtin: grep>'),
 )
 

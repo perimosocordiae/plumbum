@@ -1,6 +1,7 @@
 import re
 import sys
-from itertools import cycle, repeat
+from collections import deque
+from itertools import cycle, repeat, chain
 from select import select
 from subprocess import Popen, PIPE
 from urllib2 import urlopen
@@ -20,6 +21,14 @@ def grep(pipe, regex):
       yield p
 
 
+@Builtin()
+def count(pipe):
+  if hasattr(pipe, '__len__'):
+    return len(pipe)
+  return sum(1 for _ in pipe)
+
+
+Builtin(name='flatten',arity=1)(chain.from_iterable)
 Builtin(name='repeat',arity=1)(repeat)
 Builtin(name='uniq',arity=1)(set)
 Builtin(name='sort',arity=1)(sorted)
@@ -78,3 +87,9 @@ def head(pipe, n):
     if i >= n:
       break
     yield line
+
+
+@Builtin()
+def tail(pipe, n):
+  return deque(pipe, maxlen=n)
+
