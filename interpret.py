@@ -31,34 +31,42 @@ def parse(tokens, state):
       break
     elif c == '|':
       # move the first expr in the pipe to the end
-      prog.append(prog.pop(pipe_start))
-      pipe_start = len(prog)
+      pipe_start = reorder_pipe(prog, pipe_start)
     elif c in '1234567890-\'"':
       prog.append(ast.literal_eval(token))
     elif token == '=':
       assert len(prog) == 1, 'Assigning to >1 name'
-      assign = prog.pop()
+      assert type(prog[0]) is pblib.Ident, 'Assigning to non-identifier'
+      assign = prog.pop().name
     elif c == '<':
-      prog.append(state['slurp'])
+      prog.append(pblib.Ident('slurp'))
       prog.append(token[1:-1])
     elif c == '`':
-      prog.append(state['shell'])
+      prog.append(pblib.Ident('shell'))
       prog.append(token[1:-1])
     elif c == '/':
       prog.append(token)
-      prog.append(state['regex'])
+      prog.append(pblib.Ident('regex'))
     elif c == '[':
       # TODO: support .. ranges, regex literals in lists
       prog.append(ast.literal_eval(token))
     else:
-      prog.append(token)
+      # Must be a bareword. Assume it's an identifier.
+      prog.append(pblib.Ident(token))
   # move the first expr in the last pipe to the end
-  if pipe_start < len(prog) - 1:
-    prog.append(prog.pop(pipe_start))
+  reorder_pipe(prog, pipe_start)
+  # handle assignment, or assign to the 'main' special name
   if assign is not None:
     state[assign] = pblib.Pipe(assign, prog)
   else:
     return pblib.Pipe('main', prog)
+
+
+def reorder_pipe(prog, pipe_start):
+  if pipe_start < len(prog) - 1:
+    assert type(prog[pipe_start]) is pblib.Ident, 'Pipe must start with an identifier'
+    prog.append(prog.pop(pipe_start))
+  return len(prog)
 
 
 def listify(x):

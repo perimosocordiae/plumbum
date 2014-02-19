@@ -2,6 +2,19 @@ import inspect
 builtins = {}
 
 
+class Ident(object):
+  '''Simple wrapper for a string that corresponds
+     to a named entity (Func or Pipe).'''
+  def __init__(self, name):
+    self.name = name
+
+  def __str__(self):
+    return self.__repr__()
+
+  def __repr__(self):
+    return '<ident: %s>' % self.name
+
+
 class Func(object):
   '''Base class for callable functions.
   Subclasses must provide .run() and the .name attribute'''
@@ -56,8 +69,9 @@ class Pipe(Func):
 
   def run(self, stack, state):
     for p in self.parts:
-      if type(p) is str and p in state:
-        p = state[p]
+      if type(p) is Ident:
+        assert p.name in state, 'Undefined identifier: %s' % p.name
+        p = state[p.name]
       if hasattr(p, 'run'):
         stack = p.run(stack, state)
       else:
