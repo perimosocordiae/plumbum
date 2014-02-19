@@ -3,6 +3,8 @@ import sys
 from itertools import cycle, repeat
 from select import select
 from subprocess import Popen, PIPE
+from urllib2 import urlopen
+
 from pblib import Builtin
 
 
@@ -32,7 +34,14 @@ def interleave(p1, p2):
 
 @Builtin()
 def slurp(path):
-  return open(path)
+  if path == '':
+    return sys.stdin
+  try:
+    return open(path)
+  except IOError as e:
+    if e.errno == 2:  # no such file, try opening as a URL
+      return urlopen(path)
+    raise e
 
 
 @Builtin()
