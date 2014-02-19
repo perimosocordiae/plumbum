@@ -57,7 +57,7 @@ equality_tests = (
   ('[0..] | head', range(10)),
   ('[-3,5..] | head', range(-3,70,8)),
   ('[0..] | head 1', [0]),
-  ('<%s> | head 1'%__file__, ['import re\n']),
+  ('<testing.py> | head 1', ['import re\n']),
   ('`echo 1`', ['1\n']),
   ('["a","","b"] | grep /./', ['a','b']),
   ('[1..20] | map string | grep /3/', ['3','13']),
