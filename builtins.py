@@ -1,4 +1,5 @@
 import re
+import string
 import sys
 from collections import deque
 from itertools import cycle, repeat, chain
@@ -7,6 +8,11 @@ from subprocess import Popen, PIPE
 from urllib2 import urlopen
 
 from pblib import Builtin
+
+
+def mapped_func(name, func):
+  '''Makes a builtin from a python function by mapping it.'''
+  return Builtin(name=name, arity=1)(lambda pipe: (func(p) for p in pipe))
 
 
 @Builtin()
@@ -22,11 +28,24 @@ def grep(pipe, regex):
 
 
 @Builtin()
+def compact(pipe):
+  for p in pipe:
+    if p:
+      yield p
+
+
+@Builtin()
 def count(pipe):
   if hasattr(pipe, '__len__'):
     return len(pipe)
   return sum(1 for _ in pipe)
 
+
+mapped_func('strip', string.strip)
+mapped_func('chr', chr)
+mapped_func('ord', ord)
+mapped_func('string', str)
+mapped_func('int', int)
 
 Builtin(name='flatten',arity=1)(chain.from_iterable)
 Builtin(name='repeat',arity=1)(repeat)
