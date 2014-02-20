@@ -48,8 +48,7 @@ def parse(tokens, state):
       prog.append(token)
       prog.append(pblib.Ident('regex'))
     elif c == '[':
-      # TODO: support .. ranges, regex literals in lists
-      prog.append(ast.literal_eval(token))
+      prog.append(parse_list(token))
     else:
       # Must be a bareword. Assume it's an identifier.
       prog.append(pblib.Ident(token))
@@ -60,6 +59,11 @@ def parse(tokens, state):
     state[assign] = pblib.Pipe(assign, prog)
   else:
     return pblib.Pipe('main', prog)
+
+
+def parse_list(list_str):
+  # TODO: support .. ranges, regex literals in lists
+  return ast.literal_eval(list_str)
 
 
 def reorder_pipe(prog, pipe_start):
