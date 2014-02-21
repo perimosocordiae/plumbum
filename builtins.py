@@ -22,6 +22,7 @@ def cat(pipe):
 
 @Builtin()
 def grep(pipe, regex):
+  assert hasattr(regex, 'search'), 'Invalid arg: regex required'
   for p in pipe:
     if regex.search(p):
       yield p
