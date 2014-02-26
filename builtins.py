@@ -131,6 +131,24 @@ def regex(literal):
   return re.compile(literal[1:end_idx], *opts)
 
 
+
+@Builtin(name='range')
+def _range(literal):
+  inner = literal
+  lhs,rhs = inner.split('..', 1)
+  if not lhs:
+    start, step = 0,1
+  else:
+    ss = map(int, lhs.split(','))
+    start = int(ss.pop(0))
+    step = 1 if not ss else start - int(ss.pop(0))
+    assert not ss, 'Extra values before .. not allowed'
+  if not rhs:
+    return count(start, step)
+  stop = int(rhs)
+  return xrange(start, stop, step)
+
+
 @Builtin(name='print')
 def _print(pipe):
   for line in pipe:

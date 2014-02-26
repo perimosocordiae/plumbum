@@ -25,6 +25,16 @@ class QuotedIdent(Ident):
     return '<quote: %s>' % self.name
 
 
+class SyntaxIdent(Ident):
+  '''Used only for syntax-produced builtins.'''
+  def __init__(self, literal, name):
+    Ident.__init__(self, name)
+    self.literal = literal
+
+  def __repr__(self):
+    return '<%s: %s>' % (self.name, self.literal)
+
+
 class Func(object):
   '''Base class for callable functions.
   Subclasses must provide .run() and the .name attribute'''
@@ -84,6 +94,8 @@ class Pipe(Func):
         if type(p) is QuotedIdent:
           p.func = state[p.name]
         else:
+          if type(p) is SyntaxIdent:
+            stack.append(p.literal)
           p = state[p.name]
       if hasattr(p, 'run'):
         stack = p.run(stack, state)

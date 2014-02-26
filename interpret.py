@@ -39,14 +39,11 @@ def parse(tokens, state):
       assert type(prog[0]) is pblib.Ident, 'Assigning to non-identifier'
       assign = prog.pop().name
     elif c == '<':
-      prog.append(pblib.Ident('slurp'))
-      prog.append(token[1:-1])
+      prog.append(pblib.SyntaxIdent(token[1:-1], 'slurp'))
     elif c == '`':
-      prog.append(pblib.Ident('shell'))
-      prog.append(token[1:-1])
+      prog.append(pblib.SyntaxIdent(token[1:-1], 'shell'))
     elif c == '/':
-      prog.append(token)
-      prog.append(pblib.Ident('regex'))
+      prog.append(pblib.SyntaxIdent(token, 'regex'))
     elif c == '[':
       prog.append(parse_list(token))
     elif c == '@':
@@ -64,13 +61,19 @@ def parse(tokens, state):
 
 
 def parse_list(list_str):
-  # TODO: support .. ranges, regex literals in lists
-  return ast.literal_eval(list_str)
-
+  try:
+    return ast.literal_eval(list_str)
+  except SyntaxError:
+    pass
+  inner = list_str[1:-1]
+  assert '[' not in inner, 'Nested non-literal lists are NYI'
+  assert '/' not in inner, 'Regexes in lists are NYI'
+  # At this stage, only range expressions are left.
+  return pblib.SyntaxIdent(inner, 'range')
 
 def reorder_pipe(prog, pipe_start):
   if pipe_start < len(prog) - 1:
-    assert type(prog[pipe_start]) is pblib.Ident, 'Pipe must start with an identifier'
+    assert isinstance(prog[pipe_start], pblib.Ident), 'Pipe must start with an identifier'
     prog.append(prog.pop(pipe_start))
   return len(prog)
 
