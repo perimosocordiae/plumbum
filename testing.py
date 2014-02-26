@@ -89,7 +89,7 @@ equality_tests = (
   ('[2,3] | zip [4,5] | flatten', [2,4,3,5]),
   #('[1..] | string | zip {`yes`} | head 2 | join ""', ['1y\n','2y\n']),  # inf looping?
   ('["","f","","","fg "] | compact', ['f','fg ']),
-  ('["hello world","foo"] | split /w+/i', [['hello','world'],['foo']]),
+  ('["hello world","foo"] | split /\s+/i', [['hello','world'],['foo']]),
   ('["abcd"] | split ""', [['a','b','c','d']]),
   ('["hello world"] | split /l+/', [['he','o wor','d']]),
   # multiline tests, for defining pipes
