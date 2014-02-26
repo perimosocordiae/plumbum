@@ -1,7 +1,6 @@
 import re
 import copy
 import sys
-from time import time
 
 from interpret import evaluate
 
@@ -13,16 +12,12 @@ def run_all_tests(state):
   for tests, runner in all_tests:
     for code, expected in tests:
       total += 1
-      tic = time()
       try:
         # prevent leaks between tests by copying the state
         runner(code, copy.deepcopy(state), expected)
       except Exception as e:
         failed += 1
         print 'Failed test %d: %s\n >> %s' % (total,code,e)
-      elapsed = time()-tic
-      if elapsed > 0.02 and total != 32:  # test 32 does an HTTP request
-        print 'Timeout on test %d: %s\n >> %f secs' % (total,code,elapsed)
   return failed, total
 
 
@@ -77,7 +72,7 @@ equality_tests = (
   ('["a","b"] | ord', [97,98]),
   ('[50] | chr | ord', [50]),
   ('[1..10] | sum', 45),
-  ('<http://www.google.com> | head 1 | count', 1),   # this is test 32, exempt from timeout checks
+  ('<http://www.google.com> | head 1 | count', 1),
   ('[[2,3],[4,5]]', [[2,3],[4,5]]),
   ('[[5..8],[4,3..1]]', [[5,6,7],[4,3,2]]),
   ('[[2],[3]] | flatten', [2,3]),
