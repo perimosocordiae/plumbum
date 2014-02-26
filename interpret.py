@@ -49,6 +49,8 @@ def parse(tokens, state):
       prog.append(pblib.Ident('regex'))
     elif c == '[':
       prog.append(parse_list(token))
+    elif c == '@':
+      prog.append(pblib.QuotedIdent(token[1:]))
     else:
       # Must be a bareword. Assume it's an identifier.
       prog.append(pblib.Ident(token))

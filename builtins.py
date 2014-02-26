@@ -22,6 +22,14 @@ def cat(pipe):
   return ''.join(str(p) for p in pipe)
 
 
+@Builtin(name='map')
+def _map(pipe, quoted):
+  for p in pipe:
+    for x in quoted.func.run([p], {}):
+      yield x
+      break
+
+
 @Builtin()
 def split(pipe, sep):
   # empty sep splits characters

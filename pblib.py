@@ -15,6 +15,16 @@ class Ident(object):
     return '<ident: %s>' % self.name
 
 
+class QuotedIdent(Ident):
+  '''Represents a quoted identifier.'''
+  def __init__(self, name):
+    Ident.__init__(self, name)
+    self.func = None
+
+  def __repr__(self):
+    return '<quote: %s>' % self.name
+
+
 class Func(object):
   '''Base class for callable functions.
   Subclasses must provide .run() and the .name attribute'''
@@ -69,9 +79,12 @@ class Pipe(Func):
 
   def run(self, stack, state):
     for p in self.parts:
-      if type(p) is Ident:
+      if isinstance(p, Ident):
         assert p.name in state, 'Undefined identifier: %s' % p.name
-        p = state[p.name]
+        if type(p) is QuotedIdent:
+          p.func = state[p.name]
+        else:
+          p = state[p.name]
       if hasattr(p, 'run'):
         stack = p.run(stack, state)
       else:
