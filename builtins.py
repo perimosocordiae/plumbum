@@ -21,6 +21,20 @@ def cat(pipe):
 
 
 @Builtin()
+def split(pipe, sep):
+  # empty sep splits characters
+  if not sep:
+    for p in pipe:
+      yield list(p)
+  elif hasattr(sep, 'search'):  # regex sep
+    for p in pipe:
+      yield sep.split(p)
+  else: # string sep
+    for p in pipe:
+      yield p.split(sep)
+
+
+@Builtin()
 def grep(pipe, regex):
   assert hasattr(regex, 'search'), 'Invalid arg: regex required'
   for p in pipe:
