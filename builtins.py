@@ -58,6 +58,15 @@ def count(pipe):
   return sum(1 for _ in pipe)
 
 
+@Builtin()
+def luniq(pipe):
+  last = Ellipsis  # won't match anything in a pipe
+  for p in pipe:
+    if p != last:
+      yield p
+      last = p
+
+
 mapped_func('strip', string.strip)
 mapped_func('chr', chr)
 mapped_func('ord', ord)
