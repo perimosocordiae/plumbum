@@ -9,6 +9,8 @@ from urllib2 import urlopen
 
 from pblib import Builtin
 
+RE_FLAGS = {'i': re.I, 'l': re.L, 'm': re.M, 's': re.S, 'u': re.U, 'x': re.X}
+
 
 def mapped_func(name, func):
   '''Makes a builtin from a python function by mapping it.'''
@@ -104,9 +106,11 @@ def shell(cmd):
 
 @Builtin()
 def regex(literal):
-  # TODO: actually parse the regex
-  assert literal[0] == '/' and literal[-1] == '/', 'TODO: parse literal'
-  return re.compile(literal[1:-1])
+  end_idx = literal.rfind('/')
+  flags = literal[end_idx+1:]
+  opts = [RE_FLAGS[f] for f in flags if f != 'g']
+  assert 'g' not in flags, 'TODO: implement //g regexen.'
+  return re.compile(literal[1:end_idx], *opts)
 
 
 @Builtin(name='print')
