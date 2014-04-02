@@ -141,7 +141,7 @@ def _range(literal):
   else:
     ss = map(int, lhs.split(','))
     start = int(ss.pop(0))
-    step = 1 if not ss else start - int(ss.pop(0))
+    step = 1 if not ss else int(ss.pop(0)) - start
     assert not ss, 'Extra values before .. not allowed'
   if not rhs:
     return count(start, step)
