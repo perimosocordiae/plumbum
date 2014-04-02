@@ -2,8 +2,7 @@ import re
 import string
 import sys
 from collections import deque
-from itertools import cycle, repeat, chain, count
-from select import select
+from itertools import cycle, repeat, chain, count, izip
 from subprocess import Popen, PIPE
 from urllib2 import urlopen
 
@@ -110,17 +109,11 @@ def slurp(path):
 
 @Builtin()
 def shell(cmd):
-  proc = Popen(cmd, shell=True, stdout=PIPE)
-  line = ''
-  while True:
-   data = select([proc.stdout],[],[])[0][0]
-   c = data.read(1).decode('utf-8')
-   if not c:
-     return
-   line += c
-   if c == '\n':
-     yield line
-     line = ''
+  proc = Popen(cmd, shell=True, stdout=PIPE, bufsize=1)
+  for line in iter(proc.stdout.readline, ''):
+    yield line
+  proc.stdout.close()
+  proc.wait()
 
 
 @Builtin()
