@@ -86,7 +86,7 @@ Builtin(name='repeat',arity=1)(repeat)
 Builtin(name='uniq',arity=1)(set)
 Builtin(name='sort',arity=1)(sorted)
 Builtin(name='sum',arity=1)(sum)
-Builtin(name='zip',arity=2)(zip)
+Builtin(name='zip',arity=2)(izip)
 
 
 @Builtin()
