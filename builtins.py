@@ -2,7 +2,7 @@ import re
 import string
 import sys
 from collections import deque
-from itertools import cycle, repeat, chain
+from itertools import cycle, repeat, chain, count
 from select import select
 from subprocess import Popen, PIPE
 from urllib2 import urlopen
@@ -59,8 +59,8 @@ def compact(pipe):
       yield p
 
 
-@Builtin()
-def count(pipe):
+@Builtin(name='count')
+def _count(pipe):
   if hasattr(pipe, '__len__'):
     return len(pipe)
   return sum(1 for _ in pipe)
